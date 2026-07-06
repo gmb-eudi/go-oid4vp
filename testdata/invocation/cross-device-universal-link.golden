@@ -1,0 +1,1 @@
+https://wallet.example.org/authorize?client_id=x509_san_dns%3Averifier.example.com&request_uri=https%3A%2F%2Fverifier.example.com%2Frequest%2FAAECAwQFBgcICQoLDA0ODw&request_uri_method=get
