@@ -31,10 +31,9 @@ var (
 	// err:presentation:invalid-response unless noted.
 	ErrBodyTooLarge        = errors.New("oid4vp: response body exceeds configured cap")
 	ErrMalformedResponse   = errors.New("oid4vp: malformed response")
-	ErrDecrypt             = errors.New("oid4vp: response decryption failed")                                        // stale/foreign key, bad JWE
-	ErrStateMismatch       = errors.New("oid4vp: state does not match session")                                      // err:presentation:nonce-mismatch
-	ErrAPVMismatch         = errors.New("oid4vp: JWE apv does not match the session nonce")                          // err:presentation:nonce-mismatch
-	ErrAPUMissing          = errors.New("oid4vp: JWE apu (mdocGeneratedNonce) missing for an mso_mdoc presentation") // OID4VP Annex B.2
+	ErrDecrypt             = errors.New("oid4vp: response decryption failed")               // stale/foreign key, bad JWE
+	ErrStateMismatch       = errors.New("oid4vp: state does not match session")             // err:presentation:nonce-mismatch
+	ErrAPVMismatch         = errors.New("oid4vp: JWE apv does not match the session nonce") // err:presentation:nonce-mismatch
 	ErrUnknownCredentialID = errors.New("oid4vp: vp_token key does not identify a credential query")
 
 	// Same-device return (T-08.8), OID4VP §8.2/§8.3/§12.1.

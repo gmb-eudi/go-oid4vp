@@ -68,7 +68,6 @@ func errorTable() []sentinelMapping {
 		{ErrDecrypt, 400, errInvalidRequest, "response could not be decrypted"},
 		{ErrStateMismatch, 400, errInvalidRequest, "state binding failed"},
 		{ErrAPVMismatch, 400, errInvalidRequest, "response nonce binding failed"},
-		{ErrAPUMissing, 400, errInvalidRequest, "missing mdoc handover nonce"},
 		{ErrUnknownCredentialID, 400, errInvalidRequest, "unexpected credential in response"},
 
 		// DCAPI.

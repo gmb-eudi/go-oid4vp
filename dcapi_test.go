@@ -209,7 +209,7 @@ func TestProcessDCAPIResponse(t *testing.T) {
 	if p.Origin != "https://client.example.com" {
 		t.Errorf("Origin = %q — needed for OID4VPDCAPIHandover", p.Origin)
 	}
-	if p.ResponseURI != "" || p.MdocGeneratedNonce != "" {
+	if p.ResponseURI != "" {
 		t.Errorf("DCAPI presentation must not carry request_uri-flow params: %+v", p)
 	}
 	if p.Nonce != s.Nonce || p.ClientID != s.ClientID {
@@ -298,9 +298,6 @@ func TestProcessDCAPIResponseThreadsSessionJWKThumbprint(t *testing.T) {
 	}
 	if want := sessionJWKThumbprint(t, consumed); p.JWKThumbprint != want {
 		t.Errorf("JWKThumbprint = %q, want %q (session's own ephemeral key)", p.JWKThumbprint, want)
-	}
-	if p.MdocGeneratedNonce != "" {
-		t.Error("DCAPI handover carries no mdocGeneratedNonce (apu)")
 	}
 	// SessionTranscriptFor now succeeds via the DCAPI handover, using the
 	// Origin + JWKThumbprint this task populated.

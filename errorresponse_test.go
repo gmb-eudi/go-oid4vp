@@ -25,7 +25,6 @@ func TestErrorResponseMapping(t *testing.T) {
 		{"body too large", oid4vp.ErrBodyTooLarge, 400, "invalid_request"},
 		{"state mismatch", oid4vp.ErrStateMismatch, 400, "invalid_request"},
 		{"apv mismatch", oid4vp.ErrAPVMismatch, 400, "invalid_request"},
-		{"apu missing", oid4vp.ErrAPUMissing, 400, "invalid_request"},
 		{"unknown credential id", oid4vp.ErrUnknownCredentialID, 400, "invalid_request"},
 		{"decrypt failure", oid4vp.ErrDecrypt, 400, "invalid_request"},
 		{"origin not expected", oid4vp.ErrOriginNotExpected, 400, "invalid_client"},
@@ -122,7 +121,7 @@ func TestErrorResponseCoversResponseErrors(t *testing.T) {
 	// NOT collapse to server_error.
 	walletTriggerable := []error{
 		oid4vp.ErrMalformedResponse, oid4vp.ErrBodyTooLarge, oid4vp.ErrStateMismatch,
-		oid4vp.ErrAPVMismatch, oid4vp.ErrAPUMissing, oid4vp.ErrUnknownCredentialID,
+		oid4vp.ErrAPVMismatch, oid4vp.ErrUnknownCredentialID,
 		oid4vp.ErrDecrypt, oid4vp.ErrOriginNotExpected, oid4vp.ErrRequestURIConsumed,
 		oid4vp.ErrSessionNotFound, oid4vp.ErrSessionExpired, oid4vp.ErrSessionConsumed,
 		oid4vp.ErrWalletMetadataInvalid, oid4vp.ErrResponseCodeMismatch, oid4vp.ErrResponseCodeConsumed,

@@ -18,12 +18,12 @@ import (
 // jwkThumbprint (Presentation.JWKThumbprint) is the RFC 7638 thumbprint of
 // the RP's OWN ephemeral response-encryption public key — computed by
 // ProcessResponse from Session.EphemeralKeyPKCS8, never from anything
-// wallet-supplied. It is unrelated to Presentation.MdocGeneratedNonce (the
-// JWE apu value, T-08.5), which is NOT an input to either constructor here
-// (T-08.7 correction 2026-07-06: this task's original brief assumed
-// mdocGeneratedNonce filled this slot; the go-mdoc constructors' actual,
-// EU-reference-verified shape takes jwkThumbprint instead — see WP-08
-// README Decisions "T-08.7/T-08.9 correction" for the full rationale).
+// wallet-supplied. The JWE apu value is NOT an input to either constructor
+// here and is not read anywhere in the pipeline (T-08.7 correction
+// 2026-07-06: this task's original brief assumed apu/mdocGeneratedNonce
+// filled this slot; the go-mdoc constructors' actual, EU-reference-verified
+// shape takes jwkThumbprint instead — see WP-08 README Decisions
+// "T-08.7/T-08.9 correction" for the full rationale).
 //
 // FLAG (carried from go-mdoc's OID4VPHandover/OID4VPDCAPIHandover doc
 // comments and docs/mdoc-eu-gap-report.md): this handover shape is

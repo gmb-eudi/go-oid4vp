@@ -47,9 +47,12 @@ func extractEncJWK(t *testing.T, claims map[string]any) *ecdsa.PublicKey {
 }
 
 // encryptResponse builds the wallet-side JWE (ECDH-ES + A128GCM — a
-// policy-allowed pair; OID4VP §8.2 direct_post.jwt). apu carries
-// mdocGeneratedNonce, apv the request nonce (OID4VP Annex B.2 /
-// ISO 18013-7 Annex B); empty strings omit the header.
+// policy-allowed pair; OID4VP §8.2 direct_post.jwt). apv carries the
+// request nonce and is validated by the engine; apu is a header some
+// wallets may still send but the engine no longer reads it at all (see
+// WP-08 README Decisions "T-08.7/T-08.9 correction") — it is set here only
+// so tests can prove its presence/absence makes no difference (OID4VP
+// Annex B.2 / ISO 18013-7 Annex B). Empty strings omit the header.
 func encryptResponse(t *testing.T, pub *ecdsa.PublicKey, payload []byte, apu, apv string) string {
 	t.Helper()
 	hdrs := jwe.NewHeaders()
@@ -97,7 +100,9 @@ func formBody(jweCompact string) []byte {
 
 // walletRespond drives the full wallet side for a session: fetch+verify
 // the request object, extract nonce/state/JWK, encrypt vpToken. Returns
-// the POST body. mdocGeneratedNonce != "" sets apu.
+// the POST body. mdocGeneratedNonce != "" sets apu — a value the engine no
+// longer reads (kept only so tests can construct fixtures with apu present
+// or absent; see encryptResponse's doc comment).
 func walletRespond(t *testing.T, env *testEnv, s *oid4vp.Session, vpToken map[string]any, mdocGeneratedNonce string) []byte {
 	t.Helper()
 	claims, _ := buildRequestJWT(t, env, s)

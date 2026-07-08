@@ -33,11 +33,11 @@ func FuzzVPToken(f *testing.F) {
 		if err != nil {
 			return
 		}
-		_, _ = presentationsFromVPToken(s, p.VPToken, "mgn", "thumb")
+		_, _ = presentationsFromVPToken(s, p.VPToken, "thumb")
 		// exercise the raw map path too
 		var m map[string]json.RawMessage
 		if json.Unmarshal(data, &m) == nil {
-			_, _ = presentationsFromVPToken(s, m, "", "")
+			_, _ = presentationsFromVPToken(s, m, "")
 		}
 	})
 }

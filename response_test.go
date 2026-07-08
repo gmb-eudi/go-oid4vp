@@ -57,7 +57,7 @@ func TestProcessResponseHappyPathSameDevice(t *testing.T) {
 	if p.Nonce != got.Nonce || p.ClientID != got.ClientID || p.ResponseURI != got.ResponseURI {
 		t.Errorf("binding params = %+v, want session values", p)
 	}
-	if p.MdocGeneratedNonce != "" || p.Origin != "" {
+	if p.Origin != "" {
 		t.Errorf("sd-jwt cross/same-device presentation must not carry mdoc/DCAPI params: %+v", p)
 	}
 

@@ -15,11 +15,11 @@ import (
 	oid4vp "github.com/gmb-eudi/go-oid4vp"
 )
 
-// mdocGeneratedNonceFixture mimics the wallet's freshly generated nonce
-// (ISO 18013-7 Annex B; OID4VP Annex B.2 — carried in JWE apu). It stays on
-// Presentation.MdocGeneratedNonce (T-08.5, untouched by this task) but is
-// NOT an input to the SessionTranscript handover constructors below (T-08.7
-// correction 2026-07-06 — see WP-08 README Decisions).
+// mdocGeneratedNonceFixture is an arbitrary apu value a wallet might still
+// send (ISO 18013-7 Annex B; OID4VP Annex B.2). apu is no longer read by
+// the engine at all (see WP-08 README Decisions "T-08.7/T-08.9
+// correction") — this fixture exists only to prove its PRESENCE has no
+// effect; TestMdocWithoutAPUSucceeds proves the same for its ABSENCE.
 const mdocGeneratedNonceFixture = "AXlNco6JqbX0ZgD5wat0Vw"
 
 func mdocSession(t *testing.T, env *testEnv) (*oid4vp.Session, []oid4vp.Presentation) {
@@ -68,34 +68,12 @@ func sessionJWKThumbprint(t *testing.T, s *oid4vp.Session) string {
 	return got
 }
 
-// T-08.7: mdocGeneratedNonce is extracted from the JWE apu (Annex B.2) and
-// lands on the Presentation together with the other handover params. This
-// is T-08.5's plumbing; T-08.7 only asserts it stays intact (the field is
-// NOT used by SessionTranscriptFor's handover delegation below).
-func TestMdocGeneratedNonceExtractedFromAPU(t *testing.T) {
-	env := newTestEnv(t)
-	s, prs := mdocSession(t, env)
-	if len(prs) != 1 {
-		t.Fatalf("presentations = %d, want 1", len(prs))
-	}
-	p := prs[0]
-	if p.Format != dcql.FormatMdoc {
-		t.Fatalf("Format = %q", p.Format)
-	}
-	if p.MdocGeneratedNonce != mdocGeneratedNonceFixture {
-		t.Errorf("MdocGeneratedNonce = %q, want %q", p.MdocGeneratedNonce, mdocGeneratedNonceFixture)
-	}
-	if p.Nonce != s.Nonce || p.ClientID != s.ClientID || p.ResponseURI != s.ResponseURI {
-		t.Errorf("handover params = %+v, want session values", p)
-	}
-	if string(p.Payload) != string(sampleDeviceResponse) {
-		t.Error("mdoc Payload must be the base64url-DECODED DeviceResponse bytes (Annex B.2)")
-	}
-}
-
-// mdoc without apu is rejected (fail closed, Annex B.2). Distinct sentinel.
-// Untouched T-08.5 behavior.
-func TestMdocWithoutAPUFails(t *testing.T) {
+// mdoc without apu now succeeds: apu is no longer read by anything in the
+// verification pipeline (dead since the T-08.7 jwk_thumbprint correction —
+// see WP-08 README Decisions "T-08.7/T-08.9 correction"). The actual mdoc
+// handover binding, Presentation.JWKThumbprint, is computed independently
+// of any wallet-supplied apu value and must still be populated.
+func TestMdocWithoutAPUSucceeds(t *testing.T) {
 	ctx := context.Background()
 	env := newTestEnv(t)
 	store := oid4vp.NewMemStore(env.clock.Now)
@@ -111,8 +89,25 @@ func TestMdocWithoutAPUFails(t *testing.T) {
 		t.Fatal(err)
 	}
 	consumed := consume(t, store, s.ID)
-	if _, _, err := env.engine.ProcessResponse(ctx, consumed, oid4vp.RawResponse{Body: body}); !errors.Is(err, oid4vp.ErrAPUMissing) {
-		t.Fatalf("err = %v, want ErrAPUMissing", err)
+	prs, _, err := env.engine.ProcessResponse(ctx, consumed, oid4vp.RawResponse{Body: body})
+	if err != nil {
+		t.Fatalf("apu-absent mso_mdoc presentation must succeed (apu is no longer read): %v", err)
+	}
+	if len(prs) != 1 {
+		t.Fatalf("presentations = %d, want 1", len(prs))
+	}
+	p := prs[0]
+	if p.Format != dcql.FormatMdoc {
+		t.Fatalf("Format = %q", p.Format)
+	}
+	if p.JWKThumbprint == "" {
+		t.Error("JWKThumbprint must still be populated — the real handover binding is unaffected by apu's absence")
+	}
+	if p.Nonce != consumed.Nonce || p.ClientID != consumed.ClientID || p.ResponseURI != consumed.ResponseURI {
+		t.Errorf("handover params = %+v, want session values", p)
+	}
+	if string(p.Payload) != string(sampleDeviceResponse) {
+		t.Error("mdoc Payload must be the base64url-DECODED DeviceResponse bytes (Annex B.2)")
 	}
 }
 
@@ -129,11 +124,6 @@ func TestPresentationJWKThumbprintIsSessionOwnKey(t *testing.T) {
 	}
 	if want := sessionJWKThumbprint(t, s); p.JWKThumbprint != want {
 		t.Errorf("JWKThumbprint = %q, want %q (derived from Session.EphemeralKeyPKCS8)", p.JWKThumbprint, want)
-	}
-	// Distinct from the wallet-supplied apu value (mdocGeneratedNonce) —
-	// the two must never be confused.
-	if p.JWKThumbprint == p.MdocGeneratedNonce {
-		t.Error("JWKThumbprint must not equal MdocGeneratedNonce (wallet-supplied apu)")
 	}
 }
 

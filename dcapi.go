@@ -132,10 +132,10 @@ func (e *Engine) dcapiClaims(s *Session, signed bool) (map[string]any, error) {
 // (OID4VP Annex A): validate the calling origin against expected_origins,
 // then decrypt and parse like direct_post.jwt — but with no state member
 // (the browser context provides correlation; binding is nonce-based plus
-// origin validation, WP-08 decision) and the DCAPI handover instead of
-// mdocGeneratedNonce. Fail closed: an origin absent from expected_origins is
-// rejected with ErrOriginNotExpected before any decryption — the DCAPI
-// analog of the §8.2 state binding.
+// origin validation, WP-08 decision) and the DCAPI handover. Fail closed:
+// an origin absent from expected_origins is rejected with
+// ErrOriginNotExpected before any decryption — the DCAPI analog of the
+// §8.2 state binding.
 // Precondition: s obtained via SessionStore.ConsumeOnce.
 func (e *Engine) ProcessDCAPIResponse(ctx context.Context, s *Session, origin string, data []byte) ([]Presentation, error) {
 	if s == nil {
@@ -181,9 +181,9 @@ func (e *Engine) ProcessDCAPIResponse(ctx context.Context, s *Session, origin st
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrDecrypt, err)
 	}
-	// apv still binds the session nonce if present (Annex B.2); apu
-	// (mdocGeneratedNonce) is irrelevant to the DCAPI handover and discarded.
-	if _, err := checkAgreementInfo(hdr, s); err != nil {
+	// apv still binds the session nonce if present (Annex B.2); apu is not
+	// read (see checkAgreementInfo).
+	if err := checkAgreementInfo(hdr, s); err != nil {
 		return nil, err
 	}
 
@@ -204,9 +204,8 @@ func (e *Engine) ProcessDCAPIResponse(ctx context.Context, s *Session, origin st
 		return nil, err
 	}
 	// DCAPI carries no state member; correlation is the origin (validated
-	// above) plus the nonce-bound response encryption. mdocGeneratedNonce is
-	// "" — the DCAPI handover does not use apu (Annex A / Annex B.2.6.2).
-	prs, err := presentationsFromVPToken(s, payload.VPToken, "", jwkThumbprint)
+	// above) plus the nonce-bound response encryption.
+	prs, err := presentationsFromVPToken(s, payload.VPToken, jwkThumbprint)
 	if err != nil {
 		return nil, err
 	}

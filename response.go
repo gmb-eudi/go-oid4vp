@@ -36,17 +36,17 @@ type Presentation struct {
 	Format      string // dcql.FormatSDJWT | dcql.FormatMdoc (from the session's query)
 	Payload     []byte // dc+sd-jwt: presentation string verbatim; mso_mdoc: base64url-decoded DeviceResponse
 
-	Nonce, ClientID, ResponseURI, MdocGeneratedNonce string
-	Origin                                           string // DCAPI only (Annex A)
+	Nonce, ClientID, ResponseURI string
+	Origin                       string // DCAPI only (Annex A)
 
 	// JWKThumbprint is the RFC 7638 thumbprint of the RP's OWN ephemeral
 	// response-encryption public key (the same key advertised in
 	// client_metadata, T-08.3) — computed by ProcessResponse from
 	// Session.EphemeralKeyPKCS8 via crypto.JWKThumbprint, never from
-	// anything wallet-supplied, and unrelated to MdocGeneratedNonce/apu
-	// above. It is the mdoc SessionTranscript handover's key-binding input
-	// (T-08.7 correction 2026-07-06 — see WP-08 README Decisions
-	// "T-08.7/T-08.9 correction"); set only for mso_mdoc presentations.
+	// anything wallet-supplied. The JWE apu header is not read at all (see
+	// WP-08 README Decisions "T-08.7/T-08.9 correction"): JWKThumbprint is
+	// the mdoc SessionTranscript handover's sole key-binding input, set
+	// only for mso_mdoc presentations.
 	JWKThumbprint string
 }
 
@@ -56,7 +56,7 @@ const maxVPTokenKeyLen = 64
 
 // ProcessResponse handles the §8.2 direct_post.jwt response for
 // request_uri flows: form parse → JWE decrypt with the per-session
-// ephemeral key → apv/apu handling (Annex B.2) → vp_token object parse
+// ephemeral key → apv handling (Annex B.2) → vp_token object parse
 // (§8.1) → state binding → response_code mint (§8.2, same-device).
 //
 // Precondition: s was obtained from SessionStore.ConsumeOnce (atomic
@@ -103,17 +103,16 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 		return nil, "", fmt.Errorf("%w: %w", ErrDecrypt, err)
 	}
 
-	mdocGeneratedNonce, err := checkAgreementInfo(hdr, s)
-	if err != nil {
+	if err := checkAgreementInfo(hdr, s); err != nil {
 		return nil, "", err
 	}
 
 	// T-08.7 (corrected 2026-07-06): the mdoc SessionTranscript handover
 	// binds the RP's OWN ephemeral response-encryption key via its RFC 7638
-	// thumbprint (same key as advertised in client_metadata, T-08.3) — NOT
-	// mdocGeneratedNonce/apu above, which stays T-08.5's concern untouched
-	// (WP-08 README Decisions "T-08.7/T-08.9 correction"). Computed here,
-	// once per response, from priv — never from wallet-supplied data.
+	// thumbprint (same key as advertised in client_metadata, T-08.3). apu is
+	// not read at all (WP-08 README Decisions "T-08.7/T-08.9 correction").
+	// Computed here, once per response, from priv — never from
+	// wallet-supplied data.
 	jwkThumbprint, err := crypto.JWKThumbprint(&priv.PublicKey)
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: ephemeral key thumbprint: %v", ErrSessionInvalid, err)
@@ -128,7 +127,7 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 		return nil, "", ErrStateMismatch
 	}
 
-	prs, err := presentationsFromVPToken(s, payload.VPToken, mdocGeneratedNonce, jwkThumbprint)
+	prs, err := presentationsFromVPToken(s, payload.VPToken, jwkThumbprint)
 	if err != nil {
 		return nil, "", err
 	}
@@ -149,36 +148,27 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 	return prs, code, nil
 }
 
-// checkAgreementInfo validates apv against the session nonce and extracts
-// mdocGeneratedNonce from apu (OID4VP Annex B.2 / ISO 18013-7 Annex B).
-// WP-08 decision: apv absent is tolerated (KDF already bound the key);
-// apv present-but-wrong is a hard failure.
-func checkAgreementInfo(hdr crypto.Header, s *Session) (string, error) {
+// checkAgreementInfo validates apv against the session nonce (OID4VP Annex
+// B.2 / ISO 18013-7 Annex B). WP-08 decision: apv absent is tolerated (KDF
+// already bound the key); apv present-but-wrong is a hard failure. apu is
+// not read: it fed only the now-removed Presentation.MdocGeneratedNonce,
+// which nothing in the verification pipeline ever consulted — see WP-08
+// README Decisions "T-08.7/T-08.9 correction" for the full rationale.
+func checkAgreementInfo(hdr crypto.Header, s *Session) error {
 	if v, ok := hdr["apv"]; ok {
 		str, ok := v.(string)
 		if !ok {
-			return "", fmt.Errorf("%w: apv must be a base64url string", ErrMalformedResponse)
+			return fmt.Errorf("%w: apv must be a base64url string", ErrMalformedResponse)
 		}
 		raw, err := base64.RawURLEncoding.DecodeString(str)
 		if err != nil {
-			return "", fmt.Errorf("%w: apv encoding", ErrMalformedResponse)
+			return fmt.Errorf("%w: apv encoding", ErrMalformedResponse)
 		}
 		if subtle.ConstantTimeCompare(raw, []byte(s.Nonce)) != 1 {
-			return "", ErrAPVMismatch
+			return ErrAPVMismatch
 		}
 	}
-	if v, ok := hdr["apu"]; ok {
-		str, ok := v.(string)
-		if !ok {
-			return "", fmt.Errorf("%w: apu must be a base64url string", ErrMalformedResponse)
-		}
-		raw, err := base64.RawURLEncoding.DecodeString(str)
-		if err != nil {
-			return "", fmt.Errorf("%w: apu encoding", ErrMalformedResponse)
-		}
-		return string(raw), nil
-	}
-	return "", nil
+	return nil
 }
 
 // responsePayload is the decrypted direct_post.jwt JSON payload. Unknown
@@ -209,12 +199,11 @@ func parseResponsePayload(plain []byte) (*responsePayload, error) {
 // DCQL credential query ids, values = ARRAYS of presentations) onto
 // Presentations carrying the verification binding parameters. Fail
 // closed: keys outside the session's query are rejected (T-08.6) — no
-// over-disclosure enters the pipeline silently. mdocGeneratedNonce and
-// jwkThumbprint are both computed once per response by ProcessResponse and
-// threaded onto every mso_mdoc presentation (T-08.5 / T-08.7 respectively —
-// jwkThumbprint is NOT derived from mdocGeneratedNonce, see WP-08 README
-// Decisions "T-08.7/T-08.9 correction").
-func presentationsFromVPToken(s *Session, vpToken map[string]json.RawMessage, mdocGeneratedNonce, jwkThumbprint string) ([]Presentation, error) {
+// over-disclosure enters the pipeline silently. jwkThumbprint is computed
+// once per response by ProcessResponse and threaded onto every mso_mdoc
+// presentation (T-08.7, see WP-08 README Decisions "T-08.7/T-08.9
+// correction").
+func presentationsFromVPToken(s *Session, vpToken map[string]json.RawMessage, jwkThumbprint string) ([]Presentation, error) {
 	formats := make(map[string]string, len(s.Query.Credentials))
 	for i := range s.Query.Credentials {
 		formats[s.Query.Credentials[i].ID] = s.Query.Credentials[i].Format
@@ -248,19 +237,12 @@ func presentationsFromVPToken(s *Session, vpToken map[string]json.RawMessage, md
 				ResponseURI: s.ResponseURI,
 			}
 			if format == dcql.FormatMdoc {
-				// Annex B.2: DeviceResponse is base64url (no padding);
-				// the handover needs mdocGeneratedNonce from apu — for
-				// request_uri flows its absence is a hard failure
-				// (T-08.7). DCAPI uses a different handover without it.
-				if s.Flow != DCAPI && mdocGeneratedNonce == "" {
-					return nil, ErrAPUMissing
-				}
+				// Annex B.2: DeviceResponse is base64url (no padding).
 				raw, err := base64.RawURLEncoding.DecodeString(entry)
 				if err != nil {
 					return nil, fmt.Errorf("%w: vp_token[%q]: mso_mdoc presentations are base64url (OID4VP Annex B.2)", ErrMalformedResponse, clip(id, maxVPTokenKeyLen))
 				}
 				p.Payload = raw
-				p.MdocGeneratedNonce = mdocGeneratedNonce
 				p.JWKThumbprint = jwkThumbprint
 			}
 			out = append(out, p)
