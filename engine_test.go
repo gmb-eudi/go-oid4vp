@@ -38,6 +38,10 @@ func TestNewConfigValidation(t *testing.T) {
 		{"empty vp format list", func(c *oid4vp.Config) { c.VPFormats.KBJWTAlgValues = nil }, oid4vp.ErrConfig},
 		{"http request_uri base", func(c *oid4vp.Config) { c.RequestURIBase = "http://verifier.example.com/request" }, oid4vp.ErrConfig},
 		{"request_uri base with query", func(c *oid4vp.Config) { c.RequestURIBase = "https://verifier.example.com/request?x=1" }, oid4vp.ErrConfig},
+		// Fix for the confirmed HIGH-severity request_uri defect: RequestURIBase
+		// is still validated as a URL when RequestURIFunc is nil (unchanged
+		// behavior) — neither knob set at all is still a config error.
+		{"neither request_uri base nor func set", func(c *oid4vp.Config) { c.RequestURIBase = "" }, oid4vp.ErrConfig},
 		{"universal link with query", func(c *oid4vp.Config) { c.UniversalLinkBase = "https://wallet.example.org/authorize?x=1" }, oid4vp.ErrConfig},
 	}
 	for _, tt := range tests {
@@ -69,6 +73,20 @@ func TestClientIDDerivedFromSAN(t *testing.T) {
 	env := newTestEnv(t)
 	if got, want := env.engine.ClientID(), "x509_san_dns:verifier.example.com"; got != want {
 		t.Fatalf("ClientID() = %q, want %q", got, want)
+	}
+}
+
+// Fix for the confirmed HIGH-severity request_uri defect: when the consumer
+// sets RequestURIFunc, RequestURIBase is not required (and not validated as
+// a URL) — the func fully owns the request_uri shape.
+func TestNewRequestURIFuncOnlyConfigIsValid(t *testing.T) {
+	cfg, _, _, _ := baseConfig(t)
+	cfg.RequestURIBase = ""
+	cfg.RequestURIFunc = func(sessionID string) string {
+		return "https://verifier.example.com/wallet/" + sessionID + "/request.jwt"
+	}
+	if _, err := oid4vp.New(context.Background(), cfg); err != nil {
+		t.Fatalf("RequestURIFunc set, RequestURIBase empty must be valid: %v", err)
 	}
 }
 

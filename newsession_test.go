@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,6 +48,45 @@ func TestNewSessionInvocationGoldens(t *testing.T) {
 	}
 	if !strings.Contains(inv.SchemeURI, "request_uri_method=get") {
 		t.Error("invocation must pin request_uri_method=get (OID4VP §5)")
+	}
+}
+
+// Confirmed HIGH-severity fix: the consumer must be able to control the
+// exact request_uri shape its own routing needs (OID4VP §5 does not
+// prescribe a URL shape — it only requires client_id + request_uri +
+// request_uri_method by reference). When RequestURIFunc is set, invocation()
+// must call it with the minted session id and embed exactly what it
+// returns — not the RequestURIBase+"/"+id default.
+func TestNewSessionRequestURIFuncControlsRequestURI(t *testing.T) {
+	var gotID string
+	env := newTestEnv(t, func(c *oid4vp.Config) {
+		c.RequestURIBase = "" // must not be required/consulted when RequestURIFunc is set
+		c.RequestURIFunc = func(sessionID string) string {
+			gotID = sessionID
+			return "https://verifier.example.com/wallet/" + sessionID + "/request.jwt"
+		}
+	})
+	s, inv, err := env.engine.NewSession(context.Background(), crossDeviceSpec(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotID != s.ID {
+		t.Fatalf("RequestURIFunc called with session id %q, want %q", gotID, s.ID)
+	}
+	_, query, ok := strings.Cut(inv.SchemeURI, "?")
+	if !ok {
+		t.Fatalf("SchemeURI has no query: %q", inv.SchemeURI)
+	}
+	q, err := url.ParseQuery(query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "https://verifier.example.com/wallet/" + s.ID + "/request.jwt"
+	if got := q.Get("request_uri"); got != want {
+		t.Errorf("request_uri = %q, want %q (RequestURIFunc result, not RequestURIBase+id)", got, want)
+	}
+	if !strings.Contains(inv.SchemeURI, "request_uri_method=get") {
+		t.Error("request_uri_method=get must be preserved regardless of RequestURIFunc (OID4VP §5)")
 	}
 }
 

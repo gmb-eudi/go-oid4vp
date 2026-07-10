@@ -208,7 +208,15 @@ func (e *Engine) invocation(ctx context.Context, s *Session) (WalletInvocation, 
 	}
 	q := url.Values{}
 	q.Set("client_id", e.clientID)
-	q.Set("request_uri", e.cfg.RequestURIBase+"/"+s.ID)
+	// OID4VP §5 does not prescribe a request_uri URL shape — only that it be
+	// an absolute URI the wallet dereferences by reference. RequestURIFunc
+	// (when set) lets the consumer build the exact URL its own bound route
+	// expects; RequestURIBase+"/"+id is the backward-compatible default.
+	requestURI := e.cfg.RequestURIBase + "/" + s.ID
+	if e.cfg.RequestURIFunc != nil {
+		requestURI = e.cfg.RequestURIFunc(s.ID)
+	}
+	q.Set("request_uri", requestURI)
 	q.Set("request_uri_method", "get") // OID4VP §5; WP-08 v1 pins GET (T-08.4)
 	enc := q.Encode()
 	inv := WalletInvocation{

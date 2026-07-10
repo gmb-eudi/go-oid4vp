@@ -66,7 +66,15 @@ type Config struct {
 	Clock  func() time.Time // nil = time.Now
 	Rand   io.Reader        // nil = crypto/rand.Reader
 
-	RequestURIBase    string // e.g. https://verifier.example.com/request — session id is appended
+	RequestURIBase string // e.g. https://verifier.example.com/request — session id is appended (default request_uri builder; ignored when RequestURIFunc is set)
+	// RequestURIFunc, when set, fully controls the request_uri embedded in
+	// the wallet invocation (OID4VP §5: the spec only requires client_id +
+	// request_uri + request_uri_method by reference, not any particular URL
+	// shape) — the consumer owns its own routing and builds the exact URL
+	// its bound route expects. When nil, RequestURIBase+"/"+id is used
+	// (backward-compatible default). RequestURIBase may be empty when this
+	// is set.
+	RequestURIFunc    func(sessionID string) string
 	UniversalLinkBase string // wallet universal-link endpoint, e.g. https://wallet.example.org/authorize
 
 	SessionTTL      time.Duration // 0 = DefaultSessionTTL
@@ -161,8 +169,13 @@ func New(ctx context.Context, cfg Config) (*Engine, error) {
 		}
 	}
 
-	if err := validBaseURL(cfg.RequestURIBase); err != nil {
-		return nil, fmt.Errorf("%w: RequestURIBase: %v", ErrConfig, err)
+	// RequestURIBase is validated as a URL only when RequestURIFunc is nil —
+	// when the consumer supplies RequestURIFunc, it owns the request_uri
+	// shape entirely and RequestURIBase is neither required nor consulted.
+	if cfg.RequestURIFunc == nil {
+		if err := validBaseURL(cfg.RequestURIBase); err != nil {
+			return nil, fmt.Errorf("%w: RequestURIBase: %v", ErrConfig, err)
+		}
 	}
 	if err := validBaseURL(cfg.UniversalLinkBase); err != nil {
 		return nil, fmt.Errorf("%w: UniversalLinkBase: %v", ErrConfig, err)
