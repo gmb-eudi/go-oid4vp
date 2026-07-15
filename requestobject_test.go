@@ -160,7 +160,7 @@ func TestRequestObjectJWTEveryMember(t *testing.T) {
 		t.Errorf("mso_mdoc alg values = %v", md)
 	}
 
-	// RPRC_19a registration member — ALWAYS present. Field vocabulary is
+	// ARF RPRC_19a registration member — ALWAYS present. Field vocabulary is
 	// rpcert.RegistrationRef.Claims() (WP-07 Decision 9 / TS 119 475
 	// §5.2.4: name, sub, registry_uri, intended_use_id).
 	reg, ok := claims["verifier_registration"].(map[string]any)

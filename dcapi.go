@@ -76,13 +76,13 @@ func (e *Engine) DCAPIUnsignedRequest(s *Session) ([]byte, error) {
 	})
 }
 
-// dcapiClaims assembles the Annex A request parameters. RPRC_19a applies
+// dcapiClaims assembles the Annex A request parameters. ARF RPRC_19a applies
 // to every presentation request, DCAPI included; its VALUE comes from
 // rpcert.RegistrationRef.Claims() (WP-07 Decision 9 / TS 119 475 §5.2.4) —
 // never re-derived here — exactly as requestClaims does for request_uri
 // flows, so both paths share one wire vocabulary.
 func (e *Engine) dcapiClaims(s *Session, signed bool) (map[string]any, error) {
-	// Defense in depth for hand-built sessions: RPRC_19a data is never
+	// Defense in depth for hand-built sessions: ARF RPRC_19a data is never
 	// optional. isZeroRegistration first so a wholly empty ref yields
 	// ErrNoRegistration, not rpcert's field-level error (mirrors requestClaims).
 	if isZeroRegistration(s.Registration) {

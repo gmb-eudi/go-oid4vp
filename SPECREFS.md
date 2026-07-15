@@ -8,7 +8,7 @@
 | ISO/IEC TS 18013-7 | 2024 | Annex B via OID4VP Annex B.2 (SessionTranscript, JWE apv — apu no longer read, see 2026-07-07 note below) |
 | ARF | 2.9 | RPRC_19a / EW-DM-44-019 (registration data in every request) |
 | CIR 2024/2982 | OJ L | Art. 3 (WRPAC presented in request) |
-| ETSI TS 119 472-2 | NOT YET PUBLISHED | RPRC_19a/RPRC_20a extension member — provisional member name `verifier_registration`, revisit on publication (see WP-08 Decisions) |
+| ETSI TS 119 472-2 | NOT YET PUBLISHED | ARF RPRC_19a/ARF RPRC_20a extension member — provisional member name `verifier_registration`, revisit on publication (see WP-08 Decisions) |
 
 ## 2026-07-07: apu dropped as a requirement (dead-code removal)
 

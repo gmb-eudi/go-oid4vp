@@ -20,9 +20,9 @@ const typOAuthAuthzReq = "oauth-authz-req+jwt"
 // matches the EUDI reference implementations).
 const audWallet = "https://self-issued.me/v2"
 
-// memberRegistration is the RPRC_19a registration-data member
+// memberRegistration is the ARF RPRC_19a registration-data member
 // (ARF EW-DM-44-019). PROVISIONAL NAME: the OpenID4VP extension is
-// specified by ETSI TS 119 472-2 + a CIR in preparation (RPRC_20a), not
+// specified by ETSI TS 119 472-2 + a CIR in preparation (ARF RPRC_20a), not
 // yet published — the name is isolated here and recorded in WP-08
 // Decisions; revisit on publication. The member VALUE shape is owned by
 // rpcert.RegistrationRef.Claims() (WP-07 Decision 9), not re-derived here.
@@ -72,13 +72,13 @@ func (e *Engine) RequestObjectJWT(ctx context.Context, s *Session) ([]byte, erro
 // requestClaims assembles the JAR claim set for request_uri flows.
 // Every member below is asserted one-by-one by TestRequestObjectJWTEveryMember.
 func (e *Engine) requestClaims(s *Session) (map[string]any, error) {
-	// Defense in depth for hand-built sessions: RPRC_19a data is never
+	// Defense in depth for hand-built sessions: ARF RPRC_19a data is never
 	// optional (T-08.3 acceptance). isZeroRegistration first so a wholly
 	// empty ref yields ErrNoRegistration, not rpcert's field-level error.
 	if isZeroRegistration(s.Registration) {
 		return nil, ErrNoRegistration
 	}
-	// The RPRC_19a member value comes from rpcert.RegistrationRef.Claims()
+	// The ARF RPRC_19a member value comes from rpcert.RegistrationRef.Claims()
 	// (WP-07 Decision 9 / TS 119 475 §5.2.4: name, sub, registry_uri,
 	// intended_use_id) — never re-derived here, so the request object and
 	// the persisted session share one wire vocabulary.
