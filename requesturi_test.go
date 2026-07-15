@@ -28,7 +28,7 @@ func TestRequestURISingleUse(t *testing.T) {
 	}
 }
 
-// The served marker survives the store roundtrip — how verifier-core will
+// The served marker survives the store roundtrip — how eudi-verifier-core will
 // actually enforce single-use across requests.
 func TestRequestURISingleUseAcrossStore(t *testing.T) {
 	ctx := context.Background()

@@ -32,7 +32,7 @@ import (
 // text (not vendored under references/ at the time of writing) — re-verify
 // once that text is available.
 //
-// verifier-core passes the result to mdoc.Verifier.Verify as
+// eudi-verifier-core passes the result to mdoc.Verifier.Verify as
 // VerifyInput.SessionTranscript (WP-03). Fail closed: incomplete
 // parameters are an error, never a zero transcript. Pure delegation — no
 // CBOR/SessionTranscript construction of its own.
