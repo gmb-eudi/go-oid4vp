@@ -11,31 +11,31 @@ import (
 	crypto "github.com/gmb-eudi/go-eudi-crypto"
 )
 
-// typOAuthAuthzReq is the JAR media type (RFC 9101; OID4VP §5 signed
+// typOAuthAuthzReq is the JAR media type (RFC 9101; [OID4VP §5] signed
 // request).
 const typOAuthAuthzReq = "oauth-authz-req+jwt"
 
 // audWallet: the wallet's AS identifier is unknown when the request is
-// built; the SIOPv2/OID4VP static audience is used (WP-08 decision,
-// matches the EUDI reference implementations).
+// built; the SIOPv2/OID4VP static audience is used (matches the EUDI
+// reference implementations).
 const audWallet = "https://self-issued.me/v2"
 
 // memberRegistration is the ARF RPRC_19a registration-data member
 // (ARF EW-DM-44-019). PROVISIONAL NAME: the OpenID4VP extension is
 // specified by ETSI TS 119 472-2 + a CIR in preparation (ARF RPRC_20a), not
-// yet published — the name is isolated here and recorded in WP-08
-// Decisions; revisit on publication. The member VALUE shape is owned by
-// rpcert.RegistrationRef.Claims() (WP-07 Decision 9), not re-derived here.
+// yet published — the name is isolated here; revisit on
+// publication. The member VALUE shape is owned by
+// rpcert.RegistrationRef.Claims(), not re-derived here.
 const memberRegistration = "verifier_registration"
 
 // memberVerifierInfo carries verifier attestations — the WRPRC when the
-// Member State issued one (OID4VP §5 verifier_info; ADR-0003).
+// Member State issued one ([OID4VP §5] verifier_info).
 const memberVerifierInfo = "verifier_info"
 
 // RequestObjectJWT builds and signs the Request Object for GET request_uri
-// (RFC 9101 JAR; OID4VP §5; HAIP §5). Single-use: the session is marked
+// (RFC 9101 JAR; [OID4VP §5]; [HAIP §5]). Single-use: the session is marked
 // served and the caller MUST persist it (SessionStore.Save); a second call
-// fails with ErrRequestURIConsumed (T-08.4).
+// fails with ErrRequestURIConsumed.
 func (e *Engine) RequestObjectJWT(ctx context.Context, s *Session) ([]byte, error) {
 	if s == nil {
 		return nil, ErrSessionInvalid
@@ -44,10 +44,10 @@ func (e *Engine) RequestObjectJWT(ctx context.Context, s *Session) ([]byte, erro
 		return nil, fmt.Errorf("%w: DCAPI sessions use the DCAPI request builder", ErrFlowMismatch)
 	}
 	if !e.clock().Before(s.ExpiresAt) {
-		return nil, ErrSessionExpired // T-08.4: expired session fails
+		return nil, ErrSessionExpired // expired session fails
 	}
 	if s.RequestObjectServed {
-		return nil, ErrRequestURIConsumed // T-08.4: second fetch fails
+		return nil, ErrRequestURIConsumed // second fetch fails
 	}
 	claims, err := e.requestClaims(s)
 	if err != nil {
@@ -73,13 +73,13 @@ func (e *Engine) RequestObjectJWT(ctx context.Context, s *Session) ([]byte, erro
 // Every member below is asserted one-by-one by TestRequestObjectJWTEveryMember.
 func (e *Engine) requestClaims(s *Session) (map[string]any, error) {
 	// Defense in depth for hand-built sessions: ARF RPRC_19a data is never
-	// optional (T-08.3 acceptance). isZeroRegistration first so a wholly
+	// optional. isZeroRegistration first so a wholly
 	// empty ref yields ErrNoRegistration, not rpcert's field-level error.
 	if isZeroRegistration(s.Registration) {
 		return nil, ErrNoRegistration
 	}
 	// The ARF RPRC_19a member value comes from rpcert.RegistrationRef.Claims()
-	// (WP-07 Decision 9 / TS 119 475 §5.2.4: name, sub, registry_uri,
+	// ([ETSI TS 119 475 §5.2.4]: name, sub, registry_uri,
 	// intended_use_id) — never re-derived here, so the request object and
 	// the persisted session share one wire vocabulary.
 	regClaim, err := s.Registration.Claims()
@@ -98,39 +98,39 @@ func (e *Engine) requestClaims(s *Session) (map[string]any, error) {
 		"iat": now.Unix(),
 		"nbf": now.Unix(),
 		"exp": s.ExpiresAt.Unix(),
-		// OID4VP §5 authorization request.
-		"client_id":       e.clientID,        // x509_san_dns:<dns> (§5)
-		"response_type":   "vp_token",        // §5
-		"response_mode":   "direct_post.jwt", // §8.2; HAIP §5: encryption mandatory
-		"response_uri":    s.ResponseURI,     // §8.2 — redirect_uri MUST NOT appear
-		"nonce":           s.Nonce,           // §5
-		"state":           s.State,           // §8.2 binding
-		"dcql_query":      s.Query,           // §6
-		"client_metadata": cm,                // §5
+		// [OID4VP §5] authorization request.
+		"client_id":       e.clientID,        // x509_san_dns:<dns> ([OID4VP §5])
+		"response_type":   "vp_token",        // [OID4VP §5]
+		"response_mode":   "direct_post.jwt", // [OID4VP §8.2]; [HAIP §5]: encryption mandatory
+		"response_uri":    s.ResponseURI,     // [OID4VP §8.2] — redirect_uri MUST NOT appear
+		"nonce":           s.Nonce,           // [OID4VP §5]
+		"state":           s.State,           // [OID4VP §8.2] binding
+		"dcql_query":      s.Query,           // [OID4VP §6]
+		"client_metadata": cm,                // [OID4VP §5]
 		// ARF RPRC_19a: registration data in EVERY request.
 		memberRegistration: regClaim,
 	}
 	if len(s.WRPRC) > 0 {
-		// OID4VP §5 verifier_info; format "jwt" per ETSI TS 119 475 WRPRC.
+		// [OID4VP §5] verifier_info; format "jwt" per ETSI TS 119 475 WRPRC.
 		claims[memberVerifierInfo] = []any{map[string]any{
 			"format": "jwt",
 			"data":   string(s.WRPRC),
 		}}
 	}
-	// transaction_data (T-08.10, phase-2 flag): defense in depth — even a
+	// transaction_data (phase-2 flag): defense in depth — even a
 	// hand-built session must not surface entries unless the engine has the
 	// flag on (validateSpec already gates NewSession, but a caller can
 	// mutate Session.TransactionData directly after construction).
 	if len(s.TransactionData) > 0 && e.cfg.EnableTransactionData {
-		claims["transaction_data"] = transactionDataStrings(s.TransactionData) // OID4VP §5 (phase-2 flag)
+		claims["transaction_data"] = transactionDataStrings(s.TransactionData) // [OID4VP §5] (phase-2 flag)
 	}
 	return claims, nil
 }
 
-// clientMetadata builds the OID4VP §5 client_metadata: the per-session
+// clientMetadata builds the [OID4VP §5] client_metadata: the per-session
 // ephemeral response-encryption JWK (use=enc), the supported enc values
-// (§8.2), and vp_formats_supported (Annex B.2/B.3). All algorithm values
-// come from Config, policy-validated at New (hard rule 4).
+// ([OID4VP §8.2]), and vp_formats_supported (Annex B.2/B.3). All algorithm values
+// come from Config, policy-validated at New (no hardcoded algorithm strings).
 func (e *Engine) clientMetadata(s *Session) (map[string]any, error) {
 	priv, err := s.ephemeralPrivateKey()
 	if err != nil {
@@ -159,7 +159,7 @@ func (e *Engine) clientMetadata(s *Session) (map[string]any, error) {
 }
 
 // ephemeralJWK renders an EC public key as an encryption JWK
-// (RFC 7518 §6.2; use=enc per OID4VP §8.2 response encryption). Coordinates
+// ([RFC 7518 §6.2]; use=enc per [OID4VP §8.2] response encryption). Coordinates
 // are read via crypto/ecdh (uncompressed SEC1 point 0x04||X||Y) rather than
 // the deprecated ecdsa.PublicKey.X/Y fields (Go 1.26 SA1019).
 func ephemeralJWK(pub *ecdsa.PublicKey, alg, kid string) (map[string]any, error) {

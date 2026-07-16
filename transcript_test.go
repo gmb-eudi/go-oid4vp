@@ -17,8 +17,8 @@ import (
 
 // mdocGeneratedNonceFixture is an arbitrary apu value a wallet might still
 // send (ISO 18013-7 Annex B; OID4VP Annex B.2). apu is no longer read by
-// the engine at all (see WP-08 README Decisions "T-08.7/T-08.9
-// correction") — this fixture exists only to prove its PRESENCE has no
+// the engine at all — this
+// fixture exists only to prove its PRESENCE has no
 // effect; TestMdocWithoutAPUSucceeds proves the same for its ABSENCE.
 const mdocGeneratedNonceFixture = "AXlNco6JqbX0ZgD5wat0Vw"
 
@@ -69,8 +69,7 @@ func sessionJWKThumbprint(t *testing.T, s *oid4vp.Session) string {
 }
 
 // mdoc without apu now succeeds: apu is no longer read by anything in the
-// verification pipeline (dead since the T-08.7 jwk_thumbprint correction —
-// see WP-08 README Decisions "T-08.7/T-08.9 correction"). The actual mdoc
+// verification pipeline (dead since the jwk_thumbprint correction). The actual mdoc
 // handover binding, Presentation.JWKThumbprint, is computed independently
 // of any wallet-supplied apu value and must still be populated.
 func TestMdocWithoutAPUSucceeds(t *testing.T) {
@@ -111,7 +110,7 @@ func TestMdocWithoutAPUSucceeds(t *testing.T) {
 	}
 }
 
-// T-08.7 (corrected 2026-07-06): Presentation.JWKThumbprint is the RFC 7638
+// Corrected 2026-07-06: Presentation.JWKThumbprint is the RFC 7638
 // thumbprint of the session's OWN ephemeral response-encryption key —
 // recomputed independently here from the persisted Session.EphemeralKeyPKCS8
 // — never anything wallet-supplied.
@@ -127,7 +126,7 @@ func TestPresentationJWKThumbprintIsSessionOwnKey(t *testing.T) {
 	}
 }
 
-// Two independent sessions mint two independent ephemeral keys (T-08.2), so
+// Two independent sessions mint two independent ephemeral keys, so
 // they must produce two different thumbprints even though every
 // wallet-supplied fixture (query, vp_token, apu) is identical across both —
 // proof the value tracks the session's own key, not any wallet input.
@@ -143,10 +142,10 @@ func TestJWKThumbprintDiffersAcrossSessions(t *testing.T) {
 	}
 }
 
-// T-08.7: SessionTranscript construction delegates EXACTLY to
+// SessionTranscript construction delegates EXACTLY to
 // mdoc.OID4VPHandover with the Presentation's parameters — jwkThumbprint in
 // the slot the stale brief called mdocGeneratedNonce (Annex B.2, corrected
-// 2026-07-06). WP-09: byte-exactness of the CBOR vs the testwallet is
+// 2026-07-06). Byte-exactness of the CBOR vs the testwallet is
 // asserted there.
 func TestSessionTranscriptDelegatesToOID4VPHandover(t *testing.T) {
 	env := newTestEnv(t)
@@ -163,7 +162,7 @@ func TestSessionTranscriptDelegatesToOID4VPHandover(t *testing.T) {
 }
 
 // Construction-level check that transcript binding is parameter-sensitive:
-// swapping the nonce yields a different transcript. WP-09: the downstream
+// swapping the nonce yields a different transcript. The downstream
 // DeviceAuth failure on nonce swap is asserted against the testwallet.
 func TestSessionTranscriptNonceSwapDiffers(t *testing.T) {
 	env := newTestEnv(t)
@@ -207,8 +206,8 @@ func TestSessionTranscriptThumbprintSwapDiffers(t *testing.T) {
 }
 
 // Guards: only mso_mdoc presentations with complete parameters get a
-// transcript; DCAPI presentations use the DCAPI handover (T-08.9 wires
-// Origin end-to-end; the delegation contract is pinned here already).
+// transcript; DCAPI presentations use the DCAPI handover (Origin is
+// wired end-to-end; the delegation contract is pinned here already).
 func TestSessionTranscriptParamGuards(t *testing.T) {
 	env := newTestEnv(t)
 	_, prs := mdocSession(t, env)
@@ -238,8 +237,7 @@ func TestSessionTranscriptParamGuards(t *testing.T) {
 
 // DCAPI presentations (Origin set) delegate to OID4VPDCAPIHandover with no
 // client_id/response_uri (OID4VP Annex A / Annex B.2.6.2 — corrected
-// 2026-07-06: client_id dropped from this variant too, see WP-08 README
-// Decisions). T-08.9 wires the full DCAPI response path and will build a
+// 2026-07-06: client_id dropped from this variant too). The full DCAPI response path and will build a
 // Presentation exactly like this one; the delegation contract is pinned
 // here using a directly-constructed value.
 func TestSessionTranscriptDCAPIDelegation(t *testing.T) {

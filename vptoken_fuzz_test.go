@@ -8,8 +8,8 @@ import (
 	dcql "github.com/gmb-eudi/go-dcql"
 )
 
-// FuzzVPToken fuzzes the decrypted-payload parsers (§8.1 vp_token JSON) —
-// the layer below the JWE (hard rule 5).
+// FuzzVPToken fuzzes the decrypted-payload parsers ([OID4VP §8.1] vp_token JSON) —
+// the layer below the JWE (must never panic on untrusted input).
 func FuzzVPToken(f *testing.F) {
 	f.Add([]byte(`{"vp_token":{"pid":["abc"]},"state":"s"}`))
 	f.Add([]byte(`{"vp_token":{"pid":"not-array"},"state":"s"}`))

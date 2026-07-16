@@ -16,7 +16,7 @@ import (
 	oid4vp "github.com/gmb-eudi/go-oid4vp"
 )
 
-// T-08.2 acceptance: invocation URL golden files — custom scheme AND
+// Invocation URL golden files — custom scheme AND
 // https universal link AND QR payload string.
 func TestNewSessionInvocationGoldens(t *testing.T) {
 	env := newTestEnv(t) // deterministic seqReader → reproducible tokens
@@ -42,7 +42,7 @@ func TestNewSessionInvocationGoldens(t *testing.T) {
 	if got, want := inv.UniversalLink, golden("cross-device-universal-link.golden"); got != want {
 		t.Errorf("UniversalLink:\n got %s\nwant %s", got, want)
 	}
-	// WP-08 decision: the QR payload is the custom-scheme URI.
+	// The QR payload is the custom-scheme URI.
 	if inv.QRPayload != inv.SchemeURI {
 		t.Errorf("QRPayload = %q, want the scheme URI", inv.QRPayload)
 	}
@@ -52,7 +52,7 @@ func TestNewSessionInvocationGoldens(t *testing.T) {
 }
 
 // Confirmed HIGH-severity fix: the consumer must be able to control the
-// exact request_uri shape its own routing needs (OID4VP §5 does not
+// exact request_uri shape its own routing needs ([OID4VP §5] does not
 // prescribe a URL shape — it only requires client_id + request_uri +
 // request_uri_method by reference). When RequestURIFunc is set, invocation()
 // must call it with the minted session id and embed exactly what it
@@ -90,7 +90,7 @@ func TestNewSessionRequestURIFuncControlsRequestURI(t *testing.T) {
 	}
 }
 
-// T-08.2: nonce/state ≥128-bit from the injected rand source; uniqueness.
+// nonce/state ≥128-bit from the injected rand source; uniqueness.
 func TestNewSessionTokenEntropyAndUniqueness(t *testing.T) {
 	env := newTestEnv(t, func(c *oid4vp.Config) { c.Rand = nil }) // real crypto/rand
 	seen := map[string]bool{}
@@ -132,7 +132,7 @@ func TestNewSessionTTLAndTimes(t *testing.T) {
 	}
 }
 
-// Per-session ephemeral response-encryption key (WP-08 decision): stored
+// Per-session ephemeral response-encryption key: stored
 // PKCS#8, EC on the configured curve, fresh per session.
 func TestNewSessionEphemeralKeyPerSession(t *testing.T) {
 	env := newTestEnv(t)
@@ -161,7 +161,7 @@ func TestNewSessionEphemeralKeyPerSession(t *testing.T) {
 	}
 }
 
-// T-08.3 acceptance (enforced at session creation): a request without a
+// Enforced at session creation: a request without a
 // RegistrationRef is impossible to build — plus the rest of the spec
 // validation matrix. Fail closed.
 func TestNewSessionSpecValidation(t *testing.T) {
@@ -174,8 +174,8 @@ func TestNewSessionSpecValidation(t *testing.T) {
 		{"empty query", func(_ *testing.T, s *oid4vp.RequestSpec) { s.Query.Credentials = nil }, oid4vp.ErrSpec},
 		{"unknown flow", func(_ *testing.T, s *oid4vp.RequestSpec) { s.Flow = "carrier-pigeon" }, oid4vp.ErrSpec},
 		{"http response_uri", func(_ *testing.T, s *oid4vp.RequestSpec) { s.ResponseURI = "http://verifier.example.com/response" }, oid4vp.ErrSpec},
-		// WP-08 decision: the response_uri FQDN must equal the
-		// x509_san_dns client identifier (OID4VP §5 FQDN rule applied to
+		// The response_uri FQDN must equal the
+		// x509_san_dns client identifier ([OID4VP §5] FQDN rule applied to
 		// the response endpoint; fail closed).
 		{"response_uri host mismatch", func(_ *testing.T, s *oid4vp.RequestSpec) { s.ResponseURI = "https://evil.example.org/response" }, oid4vp.ErrSpec},
 		{"missing response_uri", func(_ *testing.T, s *oid4vp.RequestSpec) { s.ResponseURI = "" }, oid4vp.ErrSpec},

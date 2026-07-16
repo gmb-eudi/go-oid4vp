@@ -1,6 +1,5 @@
-// Package storetest exports the SessionStore contract suite (WP-08
-// T-08.1). Any SessionStore implementation — the in-memory reference, the
-// WP-09 Valkey store — must pass Run unchanged.
+// Package storetest exports the SessionStore contract suite. Any SessionStore implementation — the in-memory reference and
+// the Valkey-backed store — must pass Run unchanged.
 package storetest
 
 import (
@@ -146,9 +145,9 @@ func Run(t *testing.T, factory func(t *testing.T) oid4vp.SessionStore) {
 		}
 	})
 
-	// WP-08 decision: the consumed marker is sticky across Save — the
+	// The consumed marker is sticky across Save — the
 	// service persists post-processing state (response_code) after
-	// ConsumeOnce, and a replayed wallet POST must still fail (§12.1).
+	// ConsumeOnce, and a replayed wallet POST must still fail ([OID4VP §12.1]).
 	t.Run("ConsumedMarkerSurvivesSave", func(t *testing.T) {
 		st := factory(t)
 		if err := st.Save(ctx, newSession("c2", time.Hour)); err != nil {
@@ -174,7 +173,7 @@ func Run(t *testing.T, factory func(t *testing.T) oid4vp.SessionStore) {
 		}
 	})
 
-	// T-08.1 acceptance: ConsumeOnce is race-proof. This test detects
+	// ConsumeOnce is race-proof. This test detects
 	// logical double-consume even without -race (no cgo on the dev box);
 	// CI runs it under -race for the memory-model guarantee.
 	t.Run("ConcurrentConsumeExactlyOnce", func(t *testing.T) {

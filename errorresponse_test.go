@@ -9,7 +9,7 @@ import (
 	oid4vp "github.com/gmb-eudi/go-oid4vp"
 )
 
-// T-08.11: wallet-boundary errors serialize per the OID4VP error-response
+// Wallet-boundary errors serialize per the OID4VP error-response
 // format (NOT problem+json). Each engine sentinel maps to a registered
 // error code + HTTP status.
 func TestErrorResponseMapping(t *testing.T) {
@@ -95,7 +95,7 @@ func TestErrorResponseWalletError(t *testing.T) {
 	}
 }
 
-// Hard rule 3: error_description is a static safe string, never the raw Go
+// error_description is a static safe string, never the raw Go
 // error text (which can carry identifiers).
 func TestErrorResponseDescriptionIsStatic(t *testing.T) {
 	env := newTestEnv(t)

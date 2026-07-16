@@ -11,7 +11,7 @@ import (
 // MemStore is the in-memory reference SessionStore: single-process, for
 // tests and development. Sessions are stored as JSON snapshots, which (a)
 // gives Load copy semantics identical to a networked store and (b) proves
-// every Session is serializable exactly as the WP-09 Valkey store needs.
+// every Session is serializable exactly as a persistent (Valkey) store needs.
 type MemStore struct {
 	mu       sync.Mutex
 	clock    func() time.Time
@@ -68,10 +68,10 @@ func (m *MemStore) load(id string) (*Session, error) {
 }
 
 // ConsumeOnce atomically hands the session to exactly one caller
-// (OID4VP §8.2 one-time response consumption; §12.1 replay defense).
+// ([OID4VP §8.2] one-time response consumption; [OID4VP §12.1] replay defense).
 // The Consumed marker is sticky: it survives later Save calls, so a
 // replayed wallet POST fails even after the service persisted
-// post-processing state (WP-08 decision, recorded in the README).
+// post-processing state.
 func (m *MemStore) ConsumeOnce(_ context.Context, id string) (*Session, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

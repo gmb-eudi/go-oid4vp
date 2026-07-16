@@ -6,7 +6,7 @@ import (
 )
 
 // OID4VP / OAuth 2.0 error codes used at the wallet boundary (OID4VP
-// Error Response; RFC 6749 §4.1.2.1 / §5.2).
+// Error Response; [RFC 6749 §4.1.2.1 / §5.2]).
 const (
 	errInvalidRequest        = "invalid_request"
 	errInvalidClient         = "invalid_client"
@@ -19,9 +19,9 @@ const (
 
 // ErrorResponse serializes an engine error for the WALLET boundary in the
 // OpenID4VP Error Response format ({"error":..,"error_description":..}),
-// NOT problem+json — the protocol wins on the wallet boundary
-// (docs/conventions.md). status is a plain int so this library imports no
-// HTTP package (ADR-0004). Services map the SAME sentinels to
+// NOT problem+json — the protocol wins on the wallet boundary.
+// status is a plain int so this library imports no
+// HTTP package. Services map the SAME sentinels to
 // err:domain:reason problem codes for their own logging/metrics.
 //
 // Unknown or internal errors collapse to 500 server_error: fail closed,
@@ -52,7 +52,7 @@ type sentinelMapping struct {
 
 // errorTable maps each engine sentinel to its wallet-boundary response.
 // Order matters only for sentinels that could wrap each other; these do
-// not, so the table is a flat lookup. // OID4VP §8.2 error responses.
+// not, so the table is a flat lookup. // [OID4VP §8.2] error responses.
 func errorTable() []sentinelMapping {
 	return []sentinelMapping{
 		// Session lifecycle.
@@ -102,7 +102,7 @@ func errorTable() []sentinelMapping {
 }
 
 // normalizeWalletCode keeps only registered OID4VP/OAuth error codes; any
-// other wallet-supplied value collapses to invalid_request (hard rule 3:
+// other wallet-supplied value collapses to invalid_request (
 // do not echo unbounded wallet text as a protocol code).
 func normalizeWalletCode(code string) string {
 	switch code {

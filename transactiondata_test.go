@@ -24,7 +24,7 @@ func txDataSpec(t *testing.T) ([][]byte, oid4vp.RequestSpec) {
 }
 
 // expectedHashes recomputes what the wallet must echo: base64url( SHA-256(
-// base64url(entry) ) ) — the OID4VP §5 transaction_data hashing.
+// base64url(entry) ) ) — the [OID4VP §5] transaction_data hashing.
 func expectedHashes(td [][]byte) []string {
 	out := make([]string, len(td))
 	for i, e := range td {
@@ -35,7 +35,7 @@ func expectedHashes(td [][]byte) []string {
 	return out
 }
 
-// T-08.10: the request carries transaction_data (base64url entries) only
+// The request carries transaction_data (base64url entries) only
 // when the phase-2 flag is on.
 func TestRequestObjectTransactionData(t *testing.T) {
 	td, spec := txDataSpec(t)
@@ -73,7 +73,7 @@ func TestRequestObjectTransactionDataOmittedWhenDisabled(t *testing.T) {
 }
 
 // TransactionDataHashes uses the ECCG policy for the digest — no hash
-// literal in production code (hard rule 4).
+// literal in production code (algorithms come from policy, never hardcoded).
 func TestTransactionDataHashes(t *testing.T) {
 	td, _ := txDataSpec(t)
 	got, err := oid4vp.TransactionDataHashes(td, "ES256", crypto.ECCG())
@@ -95,7 +95,7 @@ func TestTransactionDataHashes(t *testing.T) {
 	}
 }
 
-// T-08.10 acceptance: present/absent/mismatch matrix.
+// Present/absent/mismatch matrix.
 func TestValidateTransactionDataEcho(t *testing.T) {
 	td, spec := txDataSpec(t)
 	env := newTestEnv(t, func(c *oid4vp.Config) { c.EnableTransactionData = true })
@@ -162,7 +162,7 @@ func TestValidateTransactionDataEcho(t *testing.T) {
 	})
 }
 
-// transaction_data entries must be JSON objects (OID4VP §5) — reject
+// transaction_data entries must be JSON objects ([OID4VP §5]) — reject
 // non-object entries at NewSession.
 func TestNewSessionRejectsBadTransactionData(t *testing.T) {
 	env := newTestEnv(t, func(c *oid4vp.Config) { c.EnableTransactionData = true })

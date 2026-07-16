@@ -17,13 +17,13 @@ import (
 
 // sampleSDJWT is a structural stand-in for a dc+sd-jwt presentation
 // (issuer-jwt~disclosure~kb-jwt). Cryptographic verification of the
-// content is go-sdjwt's job (WP-02); the pipeline wiring is WP-09.
+// content is go-sdjwt's job; the pipeline wiring lives in the verifier.
 const sampleSDJWT = "eyJhbGciOiJFUzI1NiJ9.eyJmYWtlIjoidmMifQ.c2ln~WyJzYWx0IiwiZmFtaWx5X25hbWUiLCJEZW50Il0~a2JqdXQ"
 
 // sampleDeviceResponse is CBOR-ish stand-in bytes for an mso_mdoc
-// DeviceResponse; go-mdoc (WP-03) owns real parsing. vp_token carries it
+// DeviceResponse; go-mdoc owns real parsing. vp_token carries it
 // base64url-encoded (OID4VP Annex B.2). Used by the mso_mdoc flow tests
-// (T-08.7 transcript_test.go).
+// (see transcript_test.go).
 var sampleDeviceResponse = []byte{0xA2, 0x67, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x63, 0x31, 0x2E, 0x30}
 
 // extractEncJWK pulls the per-session ephemeral encryption key out of the
@@ -47,10 +47,10 @@ func extractEncJWK(t *testing.T, claims map[string]any) *ecdsa.PublicKey {
 }
 
 // encryptResponse builds the wallet-side JWE (ECDH-ES + A128GCM — a
-// policy-allowed pair; OID4VP §8.2 direct_post.jwt). apv carries the
+// policy-allowed pair; [OID4VP §8.2] direct_post.jwt). apv carries the
 // request nonce and is validated by the engine; apu is a header some
-// wallets may still send but the engine no longer reads it at all (see
-// WP-08 README Decisions "T-08.7/T-08.9 correction") — it is set here only
+// wallets may still send but the engine no longer reads it at all — it is
+// set here only
 // so tests can prove its presence/absence makes no difference (OID4VP
 // Annex B.2 / ISO 18013-7 Annex B). Empty strings omit the header.
 func encryptResponse(t *testing.T, pub *ecdsa.PublicKey, payload []byte, apu, apv string) string {
@@ -83,7 +83,7 @@ func encryptResponse(t *testing.T, pub *ecdsa.PublicKey, payload []byte, apu, ap
 }
 
 // responsePayloadJSON is the decrypted direct_post.jwt payload:
-// vp_token object + state (OID4VP §8.1/§8.2).
+// vp_token object + state ([OID4VP §8.1/§8.2]).
 func responsePayloadJSON(t *testing.T, state string, vpToken map[string]any) []byte {
 	t.Helper()
 	b, err := json.Marshal(map[string]any{"vp_token": vpToken, "state": state})

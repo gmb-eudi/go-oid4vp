@@ -56,8 +56,8 @@ func (c *fakeClock) Advance(d time.Duration) {
 }
 
 // testChain builds a synthetic WRPAC-shaped chain (leaf with SAN dNSName,
-// signed by a one-off CA) — test PKI only, generated in-process (ADR-0007:
-// no real material). Profile/policy-OID checks are go-eudi-rpcert's job.
+// signed by a one-off CA) — test PKI only, generated in-process (no real key
+// material). Profile/policy-OID checks are go-eudi-rpcert's job.
 func testChain(t testing.TB, dns string) ([]*x509.Certificate, *ecdsa.PrivateKey) {
 	t.Helper()
 	caKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
@@ -113,7 +113,7 @@ type testEnv struct {
 }
 
 // baseConfig returns a valid Config. Algorithm literals below are TEST
-// FIXTURES; production code carries none (hard rule 4) — every value is
+// FIXTURES; production code carries no algorithm literals — every value is
 // validated against crypto.Policy inside New.
 func baseConfig(t testing.TB) (oid4vp.Config, []*x509.Certificate, *ecdsa.PrivateKey, *fakeClock) {
 	t.Helper()
@@ -181,7 +181,7 @@ func testQueryF(tb testing.TB) dcql.Query {
 }
 
 // mdocQuery is the mso_mdoc counterpart to testQuery; used by the mdoc-flow
-// tests (T-08.7 transcript_test.go).
+// tests (see transcript_test.go).
 func mdocQuery(t *testing.T) dcql.Query {
 	t.Helper()
 	q, err := dcql.Parse([]byte(`{"credentials":[{"id":"pid_mdoc","format":"mso_mdoc","meta":{"doctype_value":"eu.europa.ec.eudi.pid.1"},"claims":[{"path":["eu.europa.ec.eudi.pid.1","family_name"]}]}]}`))

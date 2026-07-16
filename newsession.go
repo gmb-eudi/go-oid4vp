@@ -11,33 +11,33 @@ import (
 	rpcert "github.com/gmb-eudi/go-eudi-rpcert"
 )
 
-// RequestSpec describes one verification request (WP-08 README target
-// interface). ReturnURI is the same-device §8.3 redirect target — a README
-// addition required by T-08.8, flagged in the plan's README corrections.
+// RequestSpec describes one verification request (the target
+// interface). ReturnURI is the same-device [OID4VP §8.3] redirect target for
+// the same-device flow.
 type RequestSpec struct {
 	Query           dcql.Query
 	Flow            Flow // SameDevice | CrossDevice | DCAPI
 	ResponseURI     string
-	ReturnURI       string                 // same-device only (§8.3)
+	ReturnURI       string                 // same-device only ([OID4VP §8.3])
 	Registration    rpcert.RegistrationRef // always (ARF RPRC_19a)
-	WRPRC           []byte                 // optional (ADR-0003)
-	TransactionData [][]byte               // phase 2 (T-08.10)
+	WRPRC           []byte                 // optional
+	TransactionData [][]byte               // phase 2
 	ExpectedOrigins []string               // DCAPI signed requests (Annex A)
 }
 
 // WalletInvocation carries the flow-specific way to put the request in
 // front of a wallet: custom-scheme URI, https universal link and QR
-// payload for request_uri flows, or the DCAPI request member (T-08.9).
+// payload for request_uri flows, or the DCAPI request member.
 type WalletInvocation struct {
 	SchemeURI     string // openid4vp://?client_id=...&request_uri=...&request_uri_method=get
 	UniversalLink string // UniversalLinkBase + same query
 	QRPayload     string // string to encode into the cross-device QR
-	DCAPI         []byte // Annex A request member JSON (populated for Flow == DCAPI, T-08.9)
+	DCAPI         []byte // Annex A request member JSON (populated for Flow == DCAPI)
 }
 
 // NewSession validates spec, generates the session secrets (id, nonce,
-// state — ≥128-bit from the injected rand; OID4VP §5, §12.1) and the
-// per-session ephemeral response-encryption key (WP-08 decision), and
+// state — ≥128-bit from the injected rand; [OID4VP §5, §12.1]) and the
+// per-session ephemeral response-encryption key, and
 // returns the wallet invocation. The caller persists the session
 // (SessionStore.Save).
 func (e *Engine) NewSession(ctx context.Context, spec RequestSpec) (*Session, WalletInvocation, error) {
@@ -57,7 +57,7 @@ func (e *Engine) NewSession(ctx context.Context, spec RequestSpec) (*Session, Wa
 		return nil, WalletInvocation{}, err
 	}
 	// Per-session ephemeral response-encryption key; curve from config,
-	// policy-checked at New (HAIP §5 response encryption).
+	// policy-checked at New ([HAIP §5] response encryption).
 	key, err := crypto.GenerateEphemeralKey(e.cfg.ResponseEncryption.Curve)
 	if err != nil {
 		return nil, WalletInvocation{}, err
@@ -91,9 +91,9 @@ func (e *Engine) NewSession(ctx context.Context, spec RequestSpec) (*Session, Wa
 	return s, inv, nil
 }
 
-// validateSpec is the fail-closed gate on RequestSpec (hard rule 7).
+// validateSpec is the fail-closed gate on RequestSpec.
 func (e *Engine) validateSpec(spec RequestSpec) error {
-	// T-08.3 acceptance: a request without a RegistrationRef is impossible
+	// A request without a RegistrationRef is impossible
 	// to build (ARF RPRC_19a).
 	if isZeroRegistration(spec.Registration) {
 		return ErrNoRegistration
@@ -146,7 +146,7 @@ func (e *Engine) validateSpec(spec RequestSpec) error {
 }
 
 // validResponseURI: https, and the FQDN must equal the x509_san_dns client
-// identifier — WP-08 recorded interpretation applying the OID4VP §5 FQDN
+// identifier — applying the [OID4VP §5] FQDN
 // rule to the response endpoint (fail closed; wallets enforce the same).
 func (e *Engine) validResponseURI(raw string) error {
 	if err := validHTTPSURL(raw); err != nil {
@@ -194,12 +194,12 @@ func isZeroRegistration(r rpcert.RegistrationRef) bool {
 }
 
 // invocation renders the flow-specific wallet invocation. For request_uri
-// flows the authorization request is passed by reference (RFC 9101 §5;
-// OID4VP §5): client_id + request_uri + request_uri_method=get only.
+// flows the authorization request is passed by reference ([RFC 9101 §5];
+// [OID4VP §5]): client_id + request_uri + request_uri_method=get only.
 func (e *Engine) invocation(ctx context.Context, s *Session) (WalletInvocation, error) {
 	if s.Flow == DCAPI {
 		// DCAPI has no request_uri invocation URL; the SIGNED dc_api.jwt
-		// request member is embedded directly (T-08.9, OID4VP Annex A).
+		// request member is embedded directly (OID4VP Annex A).
 		member, err := e.DCAPIRequest(ctx, s)
 		if err != nil {
 			return WalletInvocation{}, err
@@ -208,7 +208,7 @@ func (e *Engine) invocation(ctx context.Context, s *Session) (WalletInvocation, 
 	}
 	q := url.Values{}
 	q.Set("client_id", e.clientID)
-	// OID4VP §5 does not prescribe a request_uri URL shape — only that it be
+	// [OID4VP §5] does not prescribe a request_uri URL shape — only that it be
 	// an absolute URI the wallet dereferences by reference. RequestURIFunc
 	// (when set) lets the consumer build the exact URL its own bound route
 	// expects; RequestURIBase+"/"+id is the backward-compatible default.
@@ -217,13 +217,13 @@ func (e *Engine) invocation(ctx context.Context, s *Session) (WalletInvocation, 
 		requestURI = e.cfg.RequestURIFunc(s.ID)
 	}
 	q.Set("request_uri", requestURI)
-	q.Set("request_uri_method", "get") // OID4VP §5; WP-08 v1 pins GET (T-08.4)
+	q.Set("request_uri_method", "get") // [OID4VP §5]; v1 pins GET
 	enc := q.Encode()
 	inv := WalletInvocation{
 		SchemeURI:     "openid4vp://?" + enc,
 		UniversalLink: e.cfg.UniversalLinkBase + "?" + enc,
 	}
-	// WP-08 decision: the QR payload is the custom-scheme URI; services
+	// The QR payload is the custom-scheme URI; services
 	// may choose the universal link instead — both are returned.
 	inv.QRPayload = inv.SchemeURI
 	return inv, nil

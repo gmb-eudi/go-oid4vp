@@ -19,21 +19,20 @@ import (
 // the RP's OWN ephemeral response-encryption public key — computed by
 // ProcessResponse from Session.EphemeralKeyPKCS8, never from anything
 // wallet-supplied. The JWE apu value is NOT an input to either constructor
-// here and is not read anywhere in the pipeline (T-08.7 correction
-// 2026-07-06: this task's original brief assumed apu/mdocGeneratedNonce
+// here and is not read anywhere in the pipeline (a correction of an
+// 2026-07-06: an earlier draft assumed apu/mdocGeneratedNonce
 // filled this slot; the go-mdoc constructors' actual, EU-reference-verified
-// shape takes jwkThumbprint instead — see WP-08 README Decisions
-// "T-08.7/T-08.9 correction" for the full rationale).
+// shape takes jwkThumbprint instead).
 //
 // FLAG (carried from go-mdoc's OID4VPHandover/OID4VPDCAPIHandover doc
-// comments and docs/mdoc-eu-gap-report.md): this handover shape is
+// comments): this handover shape is
 // corroborated against a production EU reference verifier, not yet
 // byte-for-byte confirmed against the OpenID4VP 1.0 Annex B.2 primary spec
 // text (not vendored under references/ at the time of writing) — re-verify
 // once that text is available.
 //
 // eudi-verifier-core passes the result to mdoc.Verifier.Verify as
-// VerifyInput.SessionTranscript (WP-03). Fail closed: incomplete
+// VerifyInput.SessionTranscript. Fail closed: incomplete
 // parameters are an error, never a zero transcript. Pure delegation — no
 // CBOR/SessionTranscript construction of its own.
 func SessionTranscriptFor(p Presentation) (mdoc.SessionTranscript, error) {
@@ -47,7 +46,7 @@ func SessionTranscriptFor(p Presentation) (mdoc.SessionTranscript, error) {
 	if p.Origin != "" {
 		// OID4VP Annex A / Annex B.2.6.2: DCAPI handover carries no
 		// client_id or response_uri; origin is the RP identity signal
-		// instead. T-08.9 wires the full DCAPI response path.
+		// instead. The full DCAPI response path wires Origin end-to-end.
 		return mdoc.OID4VPDCAPIHandover(p.Origin, p.Nonce, p.JWKThumbprint), nil
 	}
 	if p.ClientID == "" || p.ResponseURI == "" {

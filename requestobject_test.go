@@ -46,7 +46,7 @@ func newServedSession(t *testing.T, env *testEnv, spec oid4vp.RequestSpec) (*oid
 	return s, claims, hdr
 }
 
-// T-08.3 acceptance: golden JWT decode asserts EVERY member. (Byte-golden
+// Golden JWT decode asserts EVERY member. (Byte-golden
 // is impossible by design: ECDSA signatures are randomized and the
 // per-session ephemeral JWK is generated from crypto/rand — the decoded
 // member set is the golden.)
@@ -54,7 +54,7 @@ func TestRequestObjectJWTEveryMember(t *testing.T) {
 	env := newTestEnv(t)
 	s, claims, hdr := newServedSession(t, env, crossDeviceSpec(t))
 
-	// Protected header (RFC 9101; OID4VP §5 x509_san_dns).
+	// Protected header (RFC 9101; [OID4VP §5] x509_san_dns).
 	if hdr["typ"] != "oauth-authz-req+jwt" {
 		t.Errorf("typ = %v, want oauth-authz-req+jwt", hdr["typ"])
 	}
@@ -76,7 +76,7 @@ func TestRequestObjectJWTEveryMember(t *testing.T) {
 		t.Errorf("iss = %v, want client_id (RFC 9101)", claims["iss"])
 	}
 	if claims["aud"] != "https://self-issued.me/v2" {
-		t.Errorf("aud = %v (WP-08 decision)", claims["aud"])
+		t.Errorf("aud = %v", claims["aud"])
 	}
 	iat, _ := claims["iat"].(json.Number).Int64()
 	nbf, _ := claims["nbf"].(json.Number).Int64()
@@ -88,7 +88,7 @@ func TestRequestObjectJWTEveryMember(t *testing.T) {
 		t.Errorf("exp = %d, want session expiry %d", exp, s.ExpiresAt.Unix())
 	}
 
-	// OID4VP §5 / §8.2 members.
+	// [OID4VP §5 / §8.2] members.
 	if claims["client_id"] != "x509_san_dns:verifier.example.com" {
 		t.Errorf("client_id = %v", claims["client_id"])
 	}
@@ -160,9 +160,9 @@ func TestRequestObjectJWTEveryMember(t *testing.T) {
 		t.Errorf("mso_mdoc alg values = %v", md)
 	}
 
-	// ARF RPRC_19a registration member — ALWAYS present. Field vocabulary is
-	// rpcert.RegistrationRef.Claims() (WP-07 Decision 9 / TS 119 475
-	// §5.2.4: name, sub, registry_uri, intended_use_id).
+	// [ARF RPRC_19a] registration member — ALWAYS present. Field vocabulary is
+	// rpcert.RegistrationRef.Claims() ([ETSI TS 119 475 §5.2.4]: name, sub,
+	// registry_uri, intended_use_id).
 	reg, ok := claims["verifier_registration"].(map[string]any)
 	if !ok {
 		t.Fatal("verifier_registration missing (ARF RPRC_19a)")
@@ -183,17 +183,17 @@ func TestRequestObjectJWTEveryMember(t *testing.T) {
 	if _, present := claims["verifier_info"]; present {
 		t.Error("verifier_info must be absent without a WRPRC")
 	}
-	// transaction_data only under the phase-2 flag (T-08.10).
+	// transaction_data only under the phase-2 flag.
 	if _, present := claims["transaction_data"]; present {
 		t.Error("transaction_data must be absent when not requested")
 	}
 }
 
-// Optional WRPRC rides in verifier_info (OID4VP §5; WP-08 decision).
+// Optional WRPRC rides in verifier_info ([OID4VP §5]).
 func TestRequestObjectAttachesWRPRC(t *testing.T) {
 	env := newTestEnv(t)
 	spec := crossDeviceSpec(t)
-	spec.WRPRC = []byte("eyJhbGciOiJFUzI1NiJ9.wrprc-payload.sig") // structural stand-in; real WRPRC validation is go-eudi-rpcert's job (WP-07)
+	spec.WRPRC = []byte("eyJhbGciOiJFUzI1NiJ9.wrprc-payload.sig") // structural stand-in; real WRPRC validation is go-eudi-rpcert's job
 	_, claims, _ := newServedSession(t, env, spec)
 	vi, ok := claims["verifier_info"].([]any)
 	if !ok || len(vi) != 1 {
@@ -205,7 +205,7 @@ func TestRequestObjectAttachesWRPRC(t *testing.T) {
 	}
 }
 
-// T-08.3 acceptance: request without RegistrationRef is impossible —
+// Request without a RegistrationRef is impossible —
 // belt (NewSession, tested in Task 2) AND suspenders (a hand-built session
 // cannot sneak past RequestObjectJWT either).
 func TestRequestObjectImpossibleWithoutRegistration(t *testing.T) {
@@ -220,7 +220,7 @@ func TestRequestObjectImpossibleWithoutRegistration(t *testing.T) {
 	}
 }
 
-// T-08.3 acceptance: SAN/client_id mismatch is a BUILD error (engine
+// SAN/client_id mismatch is a BUILD error (engine
 // construction), not a runtime surprise.
 func TestSANMismatchIsBuildError(t *testing.T) {
 	cfg, _, _, _ := baseConfig(t)
@@ -231,7 +231,7 @@ func TestSANMismatchIsBuildError(t *testing.T) {
 }
 
 // Per-session ephemeral keys: two sessions advertise different JWKs
-// (WP-08 decision — no static decryption keys).
+// (no static decryption keys).
 func TestRequestObjectEphemeralJWKPerSession(t *testing.T) {
 	env := newTestEnv(t)
 	_, claims1, _ := newServedSession(t, env, crossDeviceSpec(t))
@@ -244,7 +244,7 @@ func TestRequestObjectEphemeralJWKPerSession(t *testing.T) {
 	}
 }
 
-// DCAPI sessions are served by the DCAPI builder (T-08.9), never by the
+// DCAPI sessions are served by the DCAPI builder, never by the
 // request_uri path.
 func TestRequestObjectRejectsDCAPIFlow(t *testing.T) {
 	env := newTestEnv(t)

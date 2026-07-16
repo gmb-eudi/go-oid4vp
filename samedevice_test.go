@@ -32,7 +32,7 @@ func processedSameDevice(t *testing.T, env *testEnv) (*oid4vp.Session, oid4vp.Re
 	return consumed, code
 }
 
-// §8.2/§8.3: the response endpoint's redirect carries the response_code
+// [OID4VP §8.2/§8.3]: the response endpoint's redirect carries the response_code
 // back to the client return URL.
 func TestRedirectURICarriesResponseCode(t *testing.T) {
 	env := newTestEnv(t)
@@ -108,7 +108,7 @@ func TestRedirectURIGuards(t *testing.T) {
 	}
 }
 
-// §8.2: response_code is single-use.
+// [OID4VP §8.2]: response_code is single-use.
 func TestResponseCodeSingleUse(t *testing.T) {
 	env := newTestEnv(t)
 	s, code := processedSameDevice(t, env)
@@ -123,7 +123,7 @@ func TestResponseCodeSingleUse(t *testing.T) {
 	}
 }
 
-// T-08.8 acceptance — session-fixation attack (§12.1): the attacker
+// Session-fixation attack ([OID4VP §12.1]): the attacker
 // starts their OWN session on the victim's browser, then tries to redeem
 // with the victim's session id (or their own code against the victim's
 // session). Both cross-bindings must fail.

@@ -16,23 +16,23 @@ import (
 )
 
 // RawResponse is the wallet's POST body to the response endpoint
-// (OID4VP §8.2 direct_post.jwt: application/x-www-form-urlencoded with
+// ([OID4VP §8.2] direct_post.jwt: application/x-www-form-urlencoded with
 // response=<JWE>). The service passes it verbatim, size-unchecked — the
 // engine owns the cap.
 type RawResponse struct {
 	Body []byte
 }
 
-// ResponseCode is the single-use §8.2 response_code minted for
-// same-device sessions and redeemed via ConsumeResponseCode (§8.3/§12.1).
+// ResponseCode is the single-use [OID4VP §8.2] response_code minted for
+// same-device sessions and redeemed via ConsumeResponseCode ([OID4VP §8.3/§12.1]).
 type ResponseCode string
 
-// Presentation is one entry of the vp_token object (OID4VP §8.1), paired
+// Presentation is one entry of the vp_token object ([OID4VP §8.1]), paired
 // with the binding parameters downstream verification needs: nonce and
 // client_id for KB-JWT (go-sdjwt), and the OID4VPHandover /
 // OID4VPDCAPIHandover inputs for mdoc (go-mdoc, Annex B.2 / Annex A).
 type Presentation struct {
-	QueryCredID string // DCQL credential query id (vp_token key, §8.1)
+	QueryCredID string // DCQL credential query id (vp_token key, [OID4VP §8.1])
 	Format      string // dcql.FormatSDJWT | dcql.FormatMdoc (from the session's query)
 	Payload     []byte // dc+sd-jwt: presentation string verbatim; mso_mdoc: base64url-decoded DeviceResponse
 
@@ -41,23 +41,23 @@ type Presentation struct {
 
 	// JWKThumbprint is the RFC 7638 thumbprint of the RP's OWN ephemeral
 	// response-encryption public key (the same key advertised in
-	// client_metadata, T-08.3) — computed by ProcessResponse from
+	// client_metadata) — computed by ProcessResponse from
 	// Session.EphemeralKeyPKCS8 via crypto.JWKThumbprint, never from
-	// anything wallet-supplied. The JWE apu header is not read at all (see
-	// WP-08 README Decisions "T-08.7/T-08.9 correction"): JWKThumbprint is
+	// anything wallet-supplied. The JWE apu header is not read at all:
+	// JWKThumbprint is
 	// the mdoc SessionTranscript handover's sole key-binding input, set
 	// only for mso_mdoc presentations.
 	JWKThumbprint string
 }
 
 // maxVPTokenKeyLen caps attacker-controlled key text quoted in errors
-// (hard rule 3: identifiers only, bounded).
+// (identifiers only, bounded — no attribute values).
 const maxVPTokenKeyLen = 64
 
-// ProcessResponse handles the §8.2 direct_post.jwt response for
+// ProcessResponse handles the [OID4VP §8.2] direct_post.jwt response for
 // request_uri flows: form parse → JWE decrypt with the per-session
 // ephemeral key → apv handling (Annex B.2) → vp_token object parse
-// (§8.1) → state binding → response_code mint (§8.2, same-device).
+// ([OID4VP §8.1]) → state binding → response_code mint ([OID4VP §8.2], same-device).
 //
 // Precondition: s was obtained from SessionStore.ConsumeOnce (atomic
 // one-time consumption; replays die at the store). The caller persists s
@@ -76,14 +76,14 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 		return nil, "", ErrSessionExpired // fail closed even on a stale store read
 	}
 	if len(r.Body) > e.cfg.MaxResponseBody {
-		return nil, "", ErrBodyTooLarge // T-08.6: oversized body cap, before any parsing
+		return nil, "", ErrBodyTooLarge // oversized body cap, before any parsing
 	}
 	vals, err := url.ParseQuery(string(r.Body))
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: form decoding", ErrMalformedResponse)
 	}
 	if vals.Get("error") != "" {
-		// The wallet declined or failed (OID4VP error response) — T-08.11.
+		// The wallet declined or failed (OID4VP error response).
 		return nil, "", walletErrorFrom(s, vals)
 	}
 	resp := vals["response"]
@@ -91,8 +91,8 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 		return nil, "", fmt.Errorf("%w: exactly one response parameter required (OID4VP §8.2)", ErrMalformedResponse)
 	}
 
-	// Decrypt with the per-session ephemeral key (WP-08 decision). A JWE
-	// addressed to a stale/foreign key fails here (T-08.6).
+	// Decrypt with the per-session ephemeral key. A JWE
+	// addressed to a stale/foreign key fails here.
 	priv, err := s.ephemeralPrivateKey()
 	if err != nil {
 		return nil, "", err
@@ -107,10 +107,10 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 		return nil, "", err
 	}
 
-	// T-08.7 (corrected 2026-07-06): the mdoc SessionTranscript handover
+	// Corrected 2026-07-06: the mdoc SessionTranscript handover
 	// binds the RP's OWN ephemeral response-encryption key via its RFC 7638
-	// thumbprint (same key as advertised in client_metadata, T-08.3). apu is
-	// not read at all (WP-08 README Decisions "T-08.7/T-08.9 correction").
+	// thumbprint (same key as advertised in client_metadata). apu is
+	// not read at all.
 	// Computed here, once per response, from priv — never from
 	// wallet-supplied data.
 	jwkThumbprint, err := crypto.JWKThumbprint(&priv.PublicKey)
@@ -122,7 +122,7 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 	if err != nil {
 		return nil, "", err
 	}
-	// §8.2 state binding — constant-time (conventions.md).
+	// [OID4VP §8.2] state binding — constant-time comparison.
 	if subtle.ConstantTimeCompare([]byte(payload.State), []byte(s.State)) != 1 {
 		return nil, "", ErrStateMismatch
 	}
@@ -134,9 +134,9 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 
 	var code ResponseCode
 	if s.Flow == SameDevice {
-		// §8.2: mint a fresh single-use response_code (≥128-bit, injected
-		// rand; §12.1 session-fixation defense). Cross-device sessions get
-		// none (WP-08 decision) — the browser polls instead.
+		// [OID4VP §8.2]: mint a fresh single-use response_code (≥128-bit, injected
+		// rand; [OID4VP §12.1] session-fixation defense). Cross-device sessions get
+		// none — the browser polls instead.
 		c, err := randToken(e.rand, tokenBytes)
 		if err != nil {
 			return nil, "", err
@@ -149,11 +149,10 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 }
 
 // checkAgreementInfo validates apv against the session nonce (OID4VP Annex
-// B.2 / ISO 18013-7 Annex B). WP-08 decision: apv absent is tolerated (KDF
+// B.2 / ISO 18013-7 Annex B). apv absent is tolerated (KDF
 // already bound the key); apv present-but-wrong is a hard failure. apu is
 // not read: it fed only the now-removed Presentation.MdocGeneratedNonce,
-// which nothing in the verification pipeline ever consulted — see WP-08
-// README Decisions "T-08.7/T-08.9 correction" for the full rationale.
+// which nothing in the verification pipeline ever consulted.
 func checkAgreementInfo(hdr crypto.Header, s *Session) error {
 	if v, ok := hdr["apv"]; ok {
 		str, ok := v.(string)
@@ -173,7 +172,7 @@ func checkAgreementInfo(hdr crypto.Header, s *Session) error {
 
 // responsePayload is the decrypted direct_post.jwt JSON payload. Unknown
 // members are tolerated (consumer side — unlike our strict authoring
-// parsers); vp_token and state are what §8.1/§8.2 bind.
+// parsers); vp_token and state are what [OID4VP §8.1/§8.2] bind.
 type responsePayload struct {
 	VPToken map[string]json.RawMessage `json:"vp_token"`
 	State   string                     `json:"state"`
@@ -195,14 +194,13 @@ func parseResponsePayload(plain []byte) (*responsePayload, error) {
 	return &p, nil
 }
 
-// presentationsFromVPToken maps the §8.1 vp_token JSON object (keys =
+// presentationsFromVPToken maps the [OID4VP §8.1] vp_token JSON object (keys =
 // DCQL credential query ids, values = ARRAYS of presentations) onto
 // Presentations carrying the verification binding parameters. Fail
-// closed: keys outside the session's query are rejected (T-08.6) — no
+// closed: keys outside the session's query are rejected — no
 // over-disclosure enters the pipeline silently. jwkThumbprint is computed
 // once per response by ProcessResponse and threaded onto every mso_mdoc
-// presentation (T-08.7, see WP-08 README Decisions "T-08.7/T-08.9
-// correction").
+// presentation.
 func presentationsFromVPToken(s *Session, vpToken map[string]json.RawMessage, jwkThumbprint string) ([]Presentation, error) {
 	formats := make(map[string]string, len(s.Query.Credentials))
 	for i := range s.Query.Credentials {
@@ -260,7 +258,7 @@ func clip(s string, n int) string {
 }
 
 // walletErrorFrom converts a wallet-sent OID4VP error response into a
-// *WalletError (T-08.11 finishes the mapping/caps). If the wallet echoed
+// *WalletError (mapping and caps applied here). If the wallet echoed
 // a state, it must still match — otherwise the error cannot be attributed
 // to this session.
 func walletErrorFrom(s *Session, vals url.Values) error {

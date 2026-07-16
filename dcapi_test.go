@@ -39,7 +39,7 @@ func decodeDCAPIMember(t *testing.T, raw []byte) (protocol string, data map[stri
 	return member.Protocol, data
 }
 
-// T-08.9 acceptance: golden request members for the SIGNED dc_api.jwt
+// Golden request members for the SIGNED dc_api.jwt
 // shape (OID4VP Annex A) — decode-and-assert (signature and ephemeral JWK
 // are non-deterministic by design).
 func TestDCAPISignedRequestMembers(t *testing.T) {
@@ -108,8 +108,8 @@ func TestDCAPISignedRequestMembers(t *testing.T) {
 }
 
 // The unsigned dc_api variant: no signature, no client_id (the origin is
-// the identity), still encrypted (response_mode dc_api.jwt — WP-08
-// decision; HAIP encryption is mandatory).
+// the identity), still encrypted (response_mode dc_api.jwt; HAIP
+// encryption is mandatory).
 func TestDCAPIUnsignedRequestMembers(t *testing.T) {
 	env := newTestEnv(t)
 	s, _, err := env.engine.NewSession(context.Background(), dcapiSpec(t))
@@ -125,7 +125,7 @@ func TestDCAPIUnsignedRequestMembers(t *testing.T) {
 		t.Fatalf("protocol = %q, want openid4vp-v1-unsigned", protocol)
 	}
 	if data["response_mode"] != "dc_api.jwt" {
-		t.Errorf("response_mode = %v — unsigned variant still encrypts (WP-08 decision)", data["response_mode"])
+		t.Errorf("response_mode = %v — unsigned variant still encrypts", data["response_mode"])
 	}
 	if data["nonce"] != s.Nonce {
 		t.Error("nonce must equal the session nonce")
@@ -162,7 +162,7 @@ func walletRespondDCAPI(t *testing.T, env *testEnv, s *oid4vp.Session, vpToken m
 		t.Fatal(err)
 	}
 	pub := extractEncJWK(t, claims)
-	// DCAPI: no state member; binding is nonce-based (WP-08 decision).
+	// DCAPI: no state member; binding is nonce-based.
 	b, err := json.Marshal(map[string]any{"vp_token": vpToken})
 	if err != nil {
 		t.Fatal(err)
@@ -175,7 +175,7 @@ func walletRespondDCAPI(t *testing.T, env *testEnv, s *oid4vp.Session, vpToken m
 	return body
 }
 
-// T-08.9: happy path + wrong-origin rejection.
+// Happy path + wrong-origin rejection.
 func TestProcessDCAPIResponse(t *testing.T) {
 	ctx := context.Background()
 	env := newTestEnv(t)
@@ -193,7 +193,7 @@ func TestProcessDCAPIResponse(t *testing.T) {
 	}
 	consumed := consume(t, store, s.ID)
 
-	// T-08.9 acceptance: wrong-origin response rejected.
+	// Wrong-origin response rejected.
 	if _, err := env.engine.ProcessDCAPIResponse(ctx, consumed, "https://evil.example.org", body); !errors.Is(err, oid4vp.ErrOriginNotExpected) {
 		t.Fatalf("wrong origin: err = %v, want ErrOriginNotExpected", err)
 	}
@@ -243,7 +243,7 @@ func TestProcessDCAPIResponseGuards(t *testing.T) {
 	}
 	consumed := consume(t, store, s.ID)
 
-	// wrong flow method on a DCAPI session (mirror of T-08.3's guard)
+	// wrong flow method on a DCAPI session
 	if _, _, err := env.engine.ProcessResponse(ctx, consumed, oid4vp.RawResponse{Body: body}); !errors.Is(err, oid4vp.ErrFlowMismatch) {
 		t.Fatalf("ProcessResponse on DCAPI session: err = %v, want ErrFlowMismatch", err)
 	}
@@ -265,12 +265,12 @@ func TestProcessDCAPIResponseGuards(t *testing.T) {
 	}
 }
 
-// T-08.9 carry-forward (T-08.7 correction 2026-07-06): a DCAPI mso_mdoc
+// Carried forward (jwk_thumbprint correction 2026-07-06): a DCAPI mso_mdoc
 // presentation must carry the RFC 7638 thumbprint of the session's OWN
 // ephemeral response-encryption key — recomputed independently here from the
 // persisted Session.EphemeralKeyPKCS8 (never anything wallet-supplied) — and
 // SessionTranscriptFor must delegate to mdoc.OID4VPDCAPIHandover using it.
-// This is the same computation/mechanism as ProcessResponse (T-08.7), applied
+// This is the same computation/mechanism as ProcessResponse, applied
 // to the DCAPI path.
 func TestProcessDCAPIResponseThreadsSessionJWKThumbprint(t *testing.T) {
 	ctx := context.Background()
@@ -311,7 +311,7 @@ func TestProcessDCAPIResponseThreadsSessionJWKThumbprint(t *testing.T) {
 	}
 }
 
-// Hard rule 5: the DCAPI response body is untrusted input.
+// The DCAPI response body is untrusted input; parsing must never panic.
 func FuzzProcessDCAPIResponse(f *testing.F) {
 	env := newTestEnvF(f)
 	ctx := context.Background()

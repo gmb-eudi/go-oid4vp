@@ -10,7 +10,7 @@ import (
 )
 
 // transactionDataStrings renders the request transaction_data member:
-// each entry base64url-encoded (OID4VP §5 transaction_data). Callers only
+// each entry base64url-encoded ([OID4VP §5] transaction_data). Callers only
 // reach this when the phase-2 flag is on and entries were validated at
 // NewSession.
 func transactionDataStrings(td [][]byte) []any {
@@ -22,7 +22,7 @@ func transactionDataStrings(td [][]byte) []any {
 }
 
 // validateTransactionData enforces that each entry is a JSON object
-// (OID4VP §5). Called from validateSpec when the flag is on.
+// ([OID4VP §5]). Called from validateSpec when the flag is on.
 func validateTransactionData(td [][]byte) error {
 	for i, e := range td {
 		var obj map[string]json.RawMessage
@@ -36,9 +36,9 @@ func validateTransactionData(td [][]byte) error {
 
 // TransactionDataHashes computes the expected transaction_data_hashes for
 // a set of request entries: base64url( H( base64url(entry) ) ), where H is
-// the digest bound to alg by the ECCG policy (OID4VP §5 transaction_data;
+// the digest bound to alg by the ECCG policy ([OID4VP §5] transaction_data;
 // HAIP baseline ES256 ⇒ SHA-256). No hash literal here — the algorithm
-// comes from the policy (hard rule 4).
+// comes from the policy (no hardcoded algorithm literals).
 func TransactionDataHashes(td [][]byte, alg string, policy crypto.Policy) ([]string, error) {
 	if policy == nil {
 		policy = crypto.ECCG()
@@ -62,9 +62,9 @@ func TransactionDataHashes(td [][]byte, alg string, policy crypto.Policy) ([]str
 
 // ValidateTransactionDataEcho compares the transaction_data_hashes echoed
 // by the wallet (in a KB-JWT for dc+sd-jwt, or the device-signed payload
-// for mso_mdoc — extracted by go-sdjwt/go-mdoc, WP-09) against the hashes
-// of the session's request entries (OID4VP §5). Set semantics: the wallet
-// may reorder. present/absent/mismatch matrix (T-08.10):
+// for mso_mdoc — extracted by go-sdjwt/go-mdoc) against the hashes
+// of the session's request entries ([OID4VP §5]). Set semantics: the wallet
+// may reorder. present/absent/mismatch matrix:
 //   - flag off but session carries entries → ErrTransactionDataDisabled
 //   - entries requested, none echoed → ErrTransactionDataMissing
 //   - none requested, some echoed → ErrTransactionDataUnexpected

@@ -9,13 +9,13 @@ import (
 // maxWalletMetadataBytes caps the absorbed wallet metadata document.
 const maxWalletMetadataBytes = 64 << 10
 
-// AbsorbWalletMetadata is the T-08.4 wallet-metadata absorption hook
-// (OID4VP §5 request_uri_method). v1 pins request_uri_method=get, so no
+// AbsorbWalletMetadata is the wallet-metadata absorption hook
+// ([OID4VP §5] request_uri_method). v1 pins request_uri_method=get, so no
 // metadata arrives on the request_uri fetch yet; services call this when
 // the future post method (or a DCAPI capability hint) delivers one. The
 // document is validated as a JSON object, size-capped, and stored verbatim
 // on the session for policy use — never parsed further here, never logged
-// (hard rule 3: treat as untrusted).
+// (treat as untrusted).
 func (e *Engine) AbsorbWalletMetadata(s *Session, raw []byte) error {
 	if s == nil {
 		return ErrSessionInvalid

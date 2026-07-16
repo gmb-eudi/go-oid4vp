@@ -8,7 +8,7 @@ import (
 )
 
 // FuzzProcessResponse fuzzes the full untrusted path: form parse → JWE →
-// payload JSON → vp_token (hard rule 5). Must never panic; every failure
+// payload JSON → vp_token. Must never panic; every failure
 // is a typed error.
 func FuzzProcessResponse(f *testing.F) {
 	env := newTestEnvF(f)

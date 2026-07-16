@@ -12,7 +12,7 @@ import (
 	oid4vp "github.com/gmb-eudi/go-oid4vp"
 )
 
-// T-08.2/T-08.3: engine construction is fail-closed — every config value
+// Engine construction is fail-closed — every config value
 // is validated up front; algorithms/curves against the ECCG policy.
 func TestNewConfigValidation(t *testing.T) {
 	tests := []struct {
@@ -24,7 +24,7 @@ func TestNewConfigValidation(t *testing.T) {
 		{"empty signing key id", func(c *oid4vp.Config) { c.SigningKeyID = "" }, oid4vp.ErrConfig},
 		{"empty chain", func(c *oid4vp.Config) { c.WRPACChain = nil }, oid4vp.ErrConfig},
 		{"empty dns name", func(c *oid4vp.Config) { c.ClientDNSName = "" }, oid4vp.ErrConfig},
-		// WP-08 decision: x509_san_dns only in v1; other prefixes are an
+		// x509_san_dns only in v1; other prefixes are an
 		// extension point the constructor rejects.
 		{"verifier_attestation prefix rejected", func(c *oid4vp.Config) { c.ClientIDPrefix = "verifier_attestation" }, oid4vp.ErrUnsupportedClientIDPrefix},
 		{"dns not in leaf SAN", func(c *oid4vp.Config) { c.ClientDNSName = "other.example.org" }, oid4vp.ErrSANMismatch},

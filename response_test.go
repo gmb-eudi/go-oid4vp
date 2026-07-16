@@ -20,9 +20,9 @@ func consume(t *testing.T, store oid4vp.SessionStore, id string) *oid4vp.Session
 	return s
 }
 
-// T-08.5 acceptance: happy path with a wallet-produced response; every
-// field asserted. // WP-09: re-run end-to-end via internal/testwallet
-// with real credentials.
+// Happy path with a wallet-produced response; every
+// field asserted. End-to-end re-run with real credentials lives in
+// internal/testwallet.
 func TestProcessResponseHappyPathSameDevice(t *testing.T) {
 	ctx := context.Background()
 	env := newTestEnv(t)
@@ -36,7 +36,7 @@ func TestProcessResponseHappyPathSameDevice(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got := consume(t, store, s.ID) // atomic one-time consume (§8.2)
+	got := consume(t, store, s.ID) // atomic one-time consume ([OID4VP §8.2])
 	prs, code, err := env.engine.ProcessResponse(ctx, got, oid4vp.RawResponse{Body: body})
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +61,7 @@ func TestProcessResponseHappyPathSameDevice(t *testing.T) {
 		t.Errorf("sd-jwt cross/same-device presentation must not carry mdoc/DCAPI params: %+v", p)
 	}
 
-	// §8.2: same-device mints a fresh single-use response_code.
+	// [OID4VP §8.2]: same-device mints a fresh single-use response_code.
 	if code == "" {
 		t.Fatal("same-device must mint a response_code (OID4VP §8.2)")
 	}
@@ -78,7 +78,7 @@ func TestProcessResponseHappyPathSameDevice(t *testing.T) {
 	}
 }
 
-// Cross-device: no redirect, no response_code (WP-08 decision).
+// Cross-device: no redirect, no response_code.
 func TestProcessResponseCrossDeviceMintsNoCode(t *testing.T) {
 	ctx := context.Background()
 	env := newTestEnv(t)
@@ -101,9 +101,9 @@ func TestProcessResponseCrossDeviceMintsNoCode(t *testing.T) {
 	}
 }
 
-// §8.1: vp_token values are ARRAYS — multiple presentations per credential
+// [OID4VP §8.1]: vp_token values are ARRAYS — multiple presentations per credential
 // query id surface as multiple Presentations (dcql.Match enforces
-// `multiple` later, pipeline step 8 — WP-09).
+// `multiple` later in the pipeline).
 func TestProcessResponseArrayValues(t *testing.T) {
 	ctx := context.Background()
 	env := newTestEnv(t)
@@ -128,7 +128,7 @@ func TestProcessResponseArrayValues(t *testing.T) {
 
 // The one-time-consumption precondition: sessions that skipped
 // ConsumeOnce are rejected — the engine refuses to process a response on
-// a merely-Loaded session (§8.2 one-time use).
+// a merely-Loaded session ([OID4VP §8.2] one-time use).
 func TestProcessResponseRequiresConsumedSession(t *testing.T) {
 	ctx := context.Background()
 	env := newTestEnv(t)

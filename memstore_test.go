@@ -11,8 +11,8 @@ import (
 	"github.com/gmb-eudi/go-oid4vp/storetest"
 )
 
-// T-08.1: the in-memory reference store passes the exported contract that
-// the WP-09 Valkey store will also run.
+// The in-memory reference store passes the exported contract that
+// the Valkey-backed store will also run.
 func TestMemStoreContract(t *testing.T) {
 	storetest.Run(t, func(_ *testing.T) oid4vp.SessionStore {
 		return oid4vp.NewMemStore(nil)

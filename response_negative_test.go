@@ -42,8 +42,8 @@ func (r *respEnv) process(t *testing.T, body []byte) error {
 	return err
 }
 
-// T-08.6 acceptance: every negative is a DISTINCT typed error.
-// conventions.md mapping noted per case.
+// Every negative is a DISTINCT typed error.
+// err:domain:reason mapping noted per case.
 func TestProcessResponseNegatives(t *testing.T) {
 	t.Run("wrong state", func(t *testing.T) { // err:presentation:nonce-mismatch
 		r := newRespEnv(t)
@@ -194,7 +194,7 @@ func TestProcessResponseNegatives(t *testing.T) {
 	})
 }
 
-// Errors must never leak payload contents (hard rule 3): process a
+// Errors must never leak payload contents: process a
 // response carrying a sentinel string and assert no error text contains it.
 func TestProcessResponseErrorsCarryNoPayload(t *testing.T) {
 	r := newRespEnv(t)

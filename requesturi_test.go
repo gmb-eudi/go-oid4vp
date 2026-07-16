@@ -10,7 +10,7 @@ import (
 	oid4vp "github.com/gmb-eudi/go-oid4vp"
 )
 
-// T-08.4 acceptance: second fetch fails.
+// Second fetch fails.
 func TestRequestURISingleUse(t *testing.T) {
 	env := newTestEnv(t)
 	s, _, err := env.engine.NewSession(context.Background(), crossDeviceSpec(t))
@@ -60,7 +60,7 @@ func TestRequestURISingleUseAcrossStore(t *testing.T) {
 	}
 }
 
-// T-08.4 acceptance: expired session fails (engine-side check — fail
+// Expired session fails (engine-side check — fail
 // closed even if the store returned a stale record).
 func TestRequestURIExpiredSession(t *testing.T) {
 	env := newTestEnv(t)
@@ -74,7 +74,7 @@ func TestRequestURIExpiredSession(t *testing.T) {
 	}
 }
 
-// T-08.4: wallet metadata absorption hook. request_uri_method is pinned
+// Wallet metadata absorption hook. request_uri_method is pinned
 // to get in v1 (asserted on the invocation golden), so this is the seam
 // for the future post method: it must accept a JSON object and reject
 // everything else, capped.
