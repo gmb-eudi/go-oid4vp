@@ -7,7 +7,7 @@ require (
 	github.com/gmb-eudi/go-eudi-crypto v0.0.4
 	github.com/gmb-eudi/go-eudi-rpcert v0.0.3
 	github.com/gmb-eudi/go-mdoc v0.0.3
-	github.com/lestrrat-go/jwx/v3 v3.1.1
+	github.com/lestrrat-go/jwx/v3 v3.2.0
 )
 
 require (
