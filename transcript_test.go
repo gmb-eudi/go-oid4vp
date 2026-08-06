@@ -1,8 +1,10 @@
 package oid4vp_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
@@ -51,7 +53,7 @@ func mdocSession(t *testing.T, env *testEnv) (*oid4vp.Session, []oid4vp.Presenta
 // oid4vp-internal helper — so the assertions below prove
 // Presentation.JWKThumbprint really is derived from the session's own key,
 // independently of how ProcessResponse computes it.
-func sessionJWKThumbprint(t *testing.T, s *oid4vp.Session) string {
+func sessionJWKThumbprint(t *testing.T, s *oid4vp.Session) []byte {
 	t.Helper()
 	k, err := x509.ParsePKCS8PrivateKey(s.EphemeralKeyPKCS8)
 	if err != nil {
@@ -61,7 +63,7 @@ func sessionJWKThumbprint(t *testing.T, s *oid4vp.Session) string {
 	if !ok {
 		t.Fatalf("ephemeral key is %T, want *ecdsa.PrivateKey", k)
 	}
-	got, err := crypto.JWKThumbprint(&ec.PublicKey)
+	got, err := crypto.JWKThumbprintBytes(&ec.PublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +101,7 @@ func TestMdocWithoutAPUSucceeds(t *testing.T) {
 	if p.Format != dcql.FormatMdoc {
 		t.Fatalf("Format = %q", p.Format)
 	}
-	if p.JWKThumbprint == "" {
+	if len(p.JWKThumbprint) == 0 {
 		t.Error("JWKThumbprint must still be populated — the real handover binding is unaffected by apu's absence")
 	}
 	if p.Nonce != consumed.Nonce || p.ClientID != consumed.ClientID || p.ResponseURI != consumed.ResponseURI {
@@ -110,19 +112,23 @@ func TestMdocWithoutAPUSucceeds(t *testing.T) {
 	}
 }
 
-// Corrected 2026-07-06: Presentation.JWKThumbprint is the RFC 7638
-// thumbprint of the session's OWN ephemeral response-encryption key —
-// recomputed independently here from the persisted Session.EphemeralKeyPKCS8
-// — never anything wallet-supplied.
+// Presentation.JWKThumbprint is the RFC 7638 thumbprint of the session's OWN
+// ephemeral response-encryption key — recomputed independently here from the
+// persisted Session.EphemeralKeyPKCS8 — never anything wallet-supplied.
 func TestPresentationJWKThumbprintIsSessionOwnKey(t *testing.T) {
 	env := newTestEnv(t)
 	s, prs := mdocSession(t, env)
 	p := prs[0]
-	if p.JWKThumbprint == "" {
+	if len(p.JWKThumbprint) == 0 {
 		t.Fatal("JWKThumbprint must not be empty for an mso_mdoc presentation")
 	}
-	if want := sessionJWKThumbprint(t, s); p.JWKThumbprint != want {
-		t.Errorf("JWKThumbprint = %q, want %q (derived from Session.EphemeralKeyPKCS8)", p.JWKThumbprint, want)
+	if want := sessionJWKThumbprint(t, s); !bytes.Equal(p.JWKThumbprint, want) {
+		t.Errorf("JWKThumbprint = %x, want %x (derived from Session.EphemeralKeyPKCS8)", p.JWKThumbprint, want)
+	}
+	// Raw digest bytes, not the printable base64url form: the mdoc handover
+	// encodes it as a CBOR byte string.
+	if len(p.JWKThumbprint) != sha256.Size {
+		t.Errorf("JWKThumbprint is %d bytes, want a raw %d-byte SHA-256 digest", len(p.JWKThumbprint), sha256.Size)
 	}
 }
 
@@ -134,19 +140,17 @@ func TestJWKThumbprintDiffersAcrossSessions(t *testing.T) {
 	env := newTestEnv(t)
 	_, prs1 := mdocSession(t, env)
 	_, prs2 := mdocSession(t, env)
-	if prs1[0].JWKThumbprint == "" || prs2[0].JWKThumbprint == "" {
+	if len(prs1[0].JWKThumbprint) == 0 || len(prs2[0].JWKThumbprint) == 0 {
 		t.Fatal("JWKThumbprint must not be empty")
 	}
-	if prs1[0].JWKThumbprint == prs2[0].JWKThumbprint {
+	if bytes.Equal(prs1[0].JWKThumbprint, prs2[0].JWKThumbprint) {
 		t.Fatal("two different sessions must not share a JWKThumbprint")
 	}
 }
 
-// SessionTranscript construction delegates EXACTLY to
-// mdoc.OID4VPHandover with the Presentation's parameters — jwkThumbprint in
-// the slot the stale brief called mdocGeneratedNonce (Annex B.2, corrected
-// 2026-07-06). Byte-exactness of the CBOR vs the testwallet is
-// asserted there.
+// SessionTranscript construction delegates EXACTLY to mdoc.OID4VPHandover with
+// the Presentation's parameters (Annex B.2). Byte-exactness of the CBOR vs the
+// testwallet is asserted there.
 func TestSessionTranscriptDelegatesToOID4VPHandover(t *testing.T) {
 	env := newTestEnv(t)
 	_, prs := mdocSession(t, env)
@@ -195,7 +199,7 @@ func TestSessionTranscriptThumbprintSwapDiffers(t *testing.T) {
 		t.Fatal(err)
 	}
 	swapped := p
-	swapped.JWKThumbprint = "SWAPPED-THUMBPRINT"
+	swapped.JWKThumbprint = []byte("SWAPPED-THUMBPRINT")
 	other, err := oid4vp.SessionTranscriptFor(swapped)
 	if err != nil {
 		t.Fatal(err)
@@ -219,7 +223,7 @@ func TestSessionTranscriptParamGuards(t *testing.T) {
 		t.Fatalf("sd-jwt: err = %v, want ErrTranscriptParams", err)
 	}
 	noThumb := good
-	noThumb.JWKThumbprint = ""
+	noThumb.JWKThumbprint = nil
 	if _, err := oid4vp.SessionTranscriptFor(noThumb); !errors.Is(err, oid4vp.ErrTranscriptParams) {
 		t.Fatalf("missing jwkThumbprint: err = %v, want ErrTranscriptParams", err)
 	}
@@ -248,7 +252,7 @@ func TestSessionTranscriptDCAPIDelegation(t *testing.T) {
 		Nonce:         "nonce",
 		ClientID:      "x509_san_dns:verifier.example.com",
 		Origin:        "https://client.example.com",
-		JWKThumbprint: "fixture-thumbprint",
+		JWKThumbprint: []byte("fixture-thumbprint"),
 	}
 	got, err := oid4vp.SessionTranscriptFor(p)
 	if err != nil {

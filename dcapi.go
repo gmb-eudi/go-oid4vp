@@ -187,14 +187,14 @@ func (e *Engine) ProcessDCAPIResponse(ctx context.Context, s *Session, origin st
 		return nil, err
 	}
 
-	// jwk_thumbprint handover-binding correction (2026-07-06), carried into DCAPI: the mdoc
-	// SessionTranscript DCAPI handover binds the RP's OWN ephemeral
+	// The mdoc SessionTranscript DCAPI handover binds the RP's OWN ephemeral
 	// response-encryption key via its RFC 7638 thumbprint (the same key
 	// advertised in client_metadata) — computed here, once, from priv, never
-	// from wallet-supplied data. Threaded onto every mso_mdoc presentation by
+	// from wallet-supplied data, and as raw digest bytes because the handover
+	// carries a CBOR byte string. Threaded onto every mso_mdoc presentation by
 	// presentationsFromVPToken exactly as ProcessResponse does for request_uri
-	// flows (the jwk_thumbprint handover-binding correction).
-	jwkThumbprint, err := crypto.JWKThumbprint(&priv.PublicKey)
+	// flows.
+	jwkThumbprint, err := crypto.JWKThumbprintBytes(&priv.PublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("%w: ephemeral key thumbprint: %v", ErrSessionInvalid, err)
 	}
