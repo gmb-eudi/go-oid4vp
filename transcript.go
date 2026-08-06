@@ -16,20 +16,10 @@ import (
 //     jwkThumbprint) — no client_id or response_uri in this variant.
 //
 // jwkThumbprint (Presentation.JWKThumbprint) is the RFC 7638 thumbprint of
-// the RP's OWN ephemeral response-encryption public key — computed by
-// ProcessResponse from Session.EphemeralKeyPKCS8, never from anything
-// wallet-supplied. The JWE apu value is NOT an input to either constructor
-// here and is not read anywhere in the pipeline (a correction of an
-// 2026-07-06: an earlier draft assumed apu/mdocGeneratedNonce
-// filled this slot; the go-mdoc constructors' actual, EU-reference-verified
-// shape takes jwkThumbprint instead).
-//
-// FLAG (carried from go-mdoc's OID4VPHandover/OID4VPDCAPIHandover doc
-// comments): this handover shape is
-// corroborated against a production EU reference verifier, not yet
-// byte-for-byte confirmed against the OpenID4VP 1.0 Annex B.2 primary spec
-// text (not vendored under references/ at the time of writing) — re-verify
-// once that text is available.
+// the RP's OWN ephemeral response-encryption public key, as raw digest bytes —
+// computed by ProcessResponse from Session.EphemeralKeyPKCS8, never from
+// anything wallet-supplied. The JWE apu value is NOT an input to either
+// constructor here and is not read anywhere in the pipeline.
 //
 // eudi-verifier-core passes the result to mdoc.Verifier.Verify as
 // VerifyInput.SessionTranscript. Fail closed: incomplete
@@ -40,7 +30,11 @@ func SessionTranscriptFor(p Presentation) (mdoc.SessionTranscript, error) {
 	if p.Format != dcql.FormatMdoc {
 		return zero, ErrTranscriptParams
 	}
-	if p.Nonce == "" || p.JWKThumbprint == "" {
+	// Both response paths here are encrypted, so a missing thumbprint means the
+	// presentation was not populated by ProcessResponse — refuse rather than
+	// build the unencrypted-response (CBOR null) transcript, which would be a
+	// different transcript silently accepted.
+	if p.Nonce == "" || len(p.JWKThumbprint) == 0 {
 		return zero, ErrTranscriptParams
 	}
 	if p.Origin != "" {

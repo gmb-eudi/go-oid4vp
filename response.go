@@ -42,12 +42,15 @@ type Presentation struct {
 	// JWKThumbprint is the RFC 7638 thumbprint of the RP's OWN ephemeral
 	// response-encryption public key (the same key advertised in
 	// client_metadata) — computed by ProcessResponse from
-	// Session.EphemeralKeyPKCS8 via crypto.JWKThumbprint, never from
+	// Session.EphemeralKeyPKCS8 via crypto.JWKThumbprintBytes, never from
 	// anything wallet-supplied. The JWE apu header is not read at all:
-	// JWKThumbprint is
-	// the mdoc SessionTranscript handover's sole key-binding input, set
-	// only for mso_mdoc presentations.
-	JWKThumbprint string
+	// JWKThumbprint is the mdoc SessionTranscript handover's sole key-binding
+	// input, set only for mso_mdoc presentations.
+	//
+	// Raw digest bytes, not the printable base64url form: the handover encodes
+	// the thumbprint as a CBOR byte string ([OID4VP Annex B.2.6]), and the two
+	// representations hash to different transcripts.
+	JWKThumbprint []byte
 }
 
 // maxVPTokenKeyLen caps attacker-controlled key text quoted in errors
@@ -107,13 +110,12 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 		return nil, "", err
 	}
 
-	// Corrected 2026-07-06: the mdoc SessionTranscript handover
-	// binds the RP's OWN ephemeral response-encryption key via its RFC 7638
-	// thumbprint (same key as advertised in client_metadata). apu is
-	// not read at all.
-	// Computed here, once per response, from priv — never from
-	// wallet-supplied data.
-	jwkThumbprint, err := crypto.JWKThumbprint(&priv.PublicKey)
+	// The mdoc SessionTranscript handover binds the RP's OWN ephemeral
+	// response-encryption key via its RFC 7638 thumbprint (same key as
+	// advertised in client_metadata). apu is not read at all. Computed here,
+	// once per response, from priv — never from wallet-supplied data, and as
+	// raw digest bytes because the handover carries a CBOR byte string.
+	jwkThumbprint, err := crypto.JWKThumbprintBytes(&priv.PublicKey)
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: ephemeral key thumbprint: %v", ErrSessionInvalid, err)
 	}
@@ -201,7 +203,7 @@ func parseResponsePayload(plain []byte) (*responsePayload, error) {
 // over-disclosure enters the pipeline silently. jwkThumbprint is computed
 // once per response by ProcessResponse and threaded onto every mso_mdoc
 // presentation.
-func presentationsFromVPToken(s *Session, vpToken map[string]json.RawMessage, jwkThumbprint string) ([]Presentation, error) {
+func presentationsFromVPToken(s *Session, vpToken map[string]json.RawMessage, jwkThumbprint []byte) ([]Presentation, error) {
 	formats := make(map[string]string, len(s.Query.Credentials))
 	for i := range s.Query.Credentials {
 		formats[s.Query.Credentials[i].ID] = s.Query.Credentials[i].Format

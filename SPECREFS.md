@@ -2,7 +2,7 @@
 
 | Spec | Version pinned | Sections used |
 |---|---|---|
-| OpenID4VP | 1.0 (final) | §5 (authorization request, client_id prefixes, verifier_info, request_uri_method, transaction_data), §6 (DCQL), §8.1 (vp_token), §8.2 (direct_post.jwt, response_code), §8.3 (redirect_uri return), §12.1 (session fixation), Annex A (DCAPI), Annex B.2 (mso_mdoc handover, RFC 7638 `jwk_thumbprint` of the RP's own ephemeral response-encryption key — corrected 2026-07-06, was `mdocGeneratedNonce`; JWE apv is validated against the session nonce), Annex B.3 (SD-JWT VC) |
+| OpenID4VP | 1.0 (final) | §5 (authorization request, client_id prefixes, verifier_info, request_uri_method, transaction_data), §6 (DCQL), §8.1 (vp_token), §8.2 (direct_post.jwt, response_code), §8.3 (redirect_uri return), §12.1 (session fixation), Annex A (DCAPI), Annex B.2 (mso_mdoc handover, RFC 7638 `jwk_thumbprint` of the RP's own ephemeral response-encryption key, carried as raw digest bytes; JWE apv is validated against the session nonce), Annex B.3 (SD-JWT VC) |
 | OpenID4VC HAIP | 1.0 (final) | §5 request/response requirements; response encryption mandatory; ES256/P-256 baseline |
 | RFC 9101 (JAR) | RFC | signed Request Object, typ oauth-authz-req+jwt, aud/exp/iat/nbf |
 | ISO/IEC TS 18013-7 | 2024 | Annex B via OID4VP Annex B.2 (SessionTranscript, JWE apv — apu no longer read, see 2026-07-07 note below) |
@@ -20,7 +20,7 @@ wallet-supplied — the mdoc `SessionTranscript` handover's sole binding
 value; nothing ever read `MdocGeneratedNonce` downstream of it. Both
 request_uri and DCAPI flows now behave identically: apu present or absent
 makes no difference. `apv` validation (session-nonce binding) is
-unaffected. The `jwk_thumbprint` CBOR-wire-type question (whether go-mdoc's
-`OID4VPHandover`/`OID4VPDCAPIHandover` correctly encode it as `tstr`) is a
-separate, still-open item — unaffected by and out of scope for this
-change.
+unaffected. The `jwk_thumbprint` CBOR wire type is settled: Annex B.2.6 defines it as
+`bstr`, so `Presentation.JWKThumbprint` carries the raw SHA-256 digest and
+go-mdoc encodes it as a byte string. go-mdoc reproduces the annex's published
+vectors byte-for-byte.

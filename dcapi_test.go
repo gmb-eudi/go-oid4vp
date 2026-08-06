@@ -293,14 +293,14 @@ func TestProcessDCAPIResponseThreadsSessionJWKThumbprint(t *testing.T) {
 		t.Fatal(err)
 	}
 	p := prs[0]
-	if p.JWKThumbprint == "" {
+	if len(p.JWKThumbprint) == 0 {
 		t.Fatal("DCAPI mso_mdoc presentation must carry the session's own JWKThumbprint")
 	}
-	if want := sessionJWKThumbprint(t, consumed); p.JWKThumbprint != want {
-		t.Errorf("JWKThumbprint = %q, want %q (session's own ephemeral key)", p.JWKThumbprint, want)
+	if want := sessionJWKThumbprint(t, consumed); !bytes.Equal(p.JWKThumbprint, want) {
+		t.Errorf("JWKThumbprint = %x, want %x (session's own ephemeral key)", p.JWKThumbprint, want)
 	}
-	// SessionTranscriptFor now succeeds via the DCAPI handover, using the
-	// Origin + JWKThumbprint this task populated.
+	// SessionTranscriptFor succeeds via the DCAPI handover, using Origin +
+	// JWKThumbprint.
 	got, err := oid4vp.SessionTranscriptFor(p)
 	if err != nil {
 		t.Fatalf("SessionTranscriptFor(dcapi) = %v", err)
