@@ -70,7 +70,7 @@ func TestProcessResponseHappyPathSameDevice(t *testing.T) {
 		t.Fatalf("response_code %q must be ≥128-bit base64url", code)
 	}
 	if got.ResponseCode != string(code) || got.ResponseCodeUsed {
-		t.Error("response_code must be stored unused on the session for §8.3 redemption")
+		t.Error("response_code must be stored unused on the session for §13.3 redemption")
 	}
 	// Service persists post-processing state; replay stays dead (Task 1).
 	if err := store.Save(ctx, got); err != nil {

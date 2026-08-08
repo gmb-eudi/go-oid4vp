@@ -36,7 +36,8 @@ var (
 	ErrAPVMismatch         = errors.New("oid4vp: JWE apv does not match the session nonce") // err:presentation:nonce-mismatch
 	ErrUnknownCredentialID = errors.New("oid4vp: vp_token key does not identify a credential query")
 
-	// Same-device return, [OID4VP §8.2/§8.3/§14.2].
+	// Same-device return: the redirect_uri response parameter [OID4VP §8.2], the
+	// response_code it carries [OID4VP §13.3], and its single use [OID4VP §14.2].
 	ErrNoResponseCode       = errors.New("oid4vp: no response_code minted for this session")
 	ErrResponseCodeMismatch = errors.New("oid4vp: response_code is not bound to this session") // err:presentation:nonce-mismatch
 	ErrResponseCodeConsumed = errors.New("oid4vp: response_code already used")                 // err:session:consumed

@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-// RedirectURI renders the [OID4VP §8.3] same-device return: the response endpoint
+// RedirectURI renders the [OID4VP §8.2] same-device return: the response endpoint
 // answers the wallet's POST with 200 {"redirect_uri": <this value>}, and
 // the wallet navigates the user's browser there. The response_code in the
-// query fences the result fetch to the browser session that actually
-// completed the presentation ([OID4VP §8.2, §14.2]).
+// query ([OID4VP §13.3]) fences the result fetch to the browser session that
+// actually completed the presentation ([OID4VP §14.2]).
 func (e *Engine) RedirectURI(s *Session) (string, error) {
 	if s == nil {
 		return "", ErrSessionInvalid

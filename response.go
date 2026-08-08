@@ -16,15 +16,16 @@ import (
 )
 
 // RawResponse is the wallet's POST body to the response endpoint
-// ([OID4VP §8.2] direct_post.jwt: application/x-www-form-urlencoded with
+// ([OID4VP §8.3.1] direct_post.jwt: application/x-www-form-urlencoded with
 // response=<JWE>). The service passes it verbatim, size-unchecked — the
 // engine owns the cap.
 type RawResponse struct {
 	Body []byte
 }
 
-// ResponseCode is the single-use [OID4VP §8.2] response_code minted for
-// same-device sessions and redeemed via ConsumeResponseCode ([OID4VP §8.3/§14.2]).
+// ResponseCode is the [OID4VP §13.3] response_code minted for same-device
+// sessions and redeemed via ConsumeResponseCode. Single use is what makes it
+// worth minting at all ([OID4VP §14.2]).
 type ResponseCode string
 
 // Presentation is one entry of the vp_token object ([OID4VP §8.1]), paired

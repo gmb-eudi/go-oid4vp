@@ -12,13 +12,13 @@ import (
 )
 
 // RequestSpec describes one verification request (the target
-// interface). ReturnURI is the same-device [OID4VP §8.3] redirect target for
+// interface). ReturnURI is the same-device [OID4VP §8.2] redirect target for
 // the same-device flow.
 type RequestSpec struct {
 	Query           dcql.Query
 	Flow            Flow // SameDevice | CrossDevice | DCAPI
 	ResponseURI     string
-	ReturnURI       string                 // same-device only ([OID4VP §8.3])
+	ReturnURI       string                 // same-device only ([OID4VP §8.2])
 	Registration    rpcert.RegistrationRef // always (ARF RPRC_19a)
 	WRPRC           []byte                 // optional
 	TransactionData [][]byte               // phase 2
@@ -122,10 +122,10 @@ func (e *Engine) validateSpec(spec RequestSpec) error {
 		}
 		if spec.Flow == SameDevice {
 			if err := validHTTPSURL(spec.ReturnURI); err != nil {
-				return fmt.Errorf("%w: same-device return_uri: %v (OID4VP §8.3)", ErrSpec, err)
+				return fmt.Errorf("%w: same-device return_uri: %v (OID4VP §8.2)", ErrSpec, err)
 			}
 		} else if spec.ReturnURI != "" {
-			return fmt.Errorf("%w: return_uri is same-device-only (OID4VP §8.3)", ErrSpec)
+			return fmt.Errorf("%w: return_uri is same-device-only (OID4VP §8.2)", ErrSpec)
 		}
 	case DCAPI:
 		if spec.ResponseURI != "" || spec.ReturnURI != "" {

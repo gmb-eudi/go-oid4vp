@@ -32,8 +32,8 @@ func processedSameDevice(t *testing.T, env *testEnv) (*oid4vp.Session, oid4vp.Re
 	return consumed, code
 }
 
-// [OID4VP §8.2/§8.3]: the response endpoint's redirect carries the response_code
-// back to the client return URL.
+// [OID4VP §8.2]: the response endpoint's redirect carries the response_code
+// ([OID4VP §13.3]) back to the client return URL.
 func TestRedirectURICarriesResponseCode(t *testing.T) {
 	env := newTestEnv(t)
 	s, code := processedSameDevice(t, env)

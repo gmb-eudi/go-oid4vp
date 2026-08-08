@@ -16,7 +16,7 @@ type Flow string
 
 // Flow values.
 const (
-	SameDevice  Flow = "same-device"  // [OID4VP §8.2/§8.3]: redirect_uri + response_code return
+	SameDevice  Flow = "same-device"  // redirect_uri [OID4VP §8.2] + response_code [OID4VP §13.3] return
 	CrossDevice Flow = "cross-device" // QR / polling; response endpoint returns no redirect
 	DCAPI       Flow = "dcapi"        // OID4VP Annex A: browser Digital Credentials API
 )
@@ -37,7 +37,7 @@ type Session struct {
 	State string `json:"state"` // response binding ([OID4VP §8.2])
 
 	ResponseURI string `json:"response_uri"`         // [OID4VP §8.2] direct_post.jwt endpoint
-	ReturnURI   string `json:"return_uri,omitempty"` // same-device [OID4VP §8.3] redirect target (see README corrections)
+	ReturnURI   string `json:"return_uri,omitempty"` // same-device [OID4VP §8.2] redirect target
 
 	Query           dcql.Query             `json:"query"`                      // [OID4VP §6]
 	Registration    rpcert.RegistrationRef `json:"registration"`               // ARF RPRC_19a — always present
@@ -53,7 +53,7 @@ type Session struct {
 	RequestObjectServed bool   `json:"request_object_served"`     // single-use request_uri
 	WalletMetadata      []byte `json:"wallet_metadata,omitempty"` // absorbed hook payload
 	Consumed            bool   `json:"consumed"`                  // sticky one-time marker (ConsumeOnce)
-	ResponseCode        string `json:"response_code,omitempty"`   // minted [OID4VP §8.2], redeemed [OID4VP §8.3]
+	ResponseCode        string `json:"response_code,omitempty"`   // minted + redeemed [OID4VP §13.3]
 	ResponseCodeUsed    bool   `json:"response_code_used,omitempty"`
 }
 
