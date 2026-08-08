@@ -29,7 +29,7 @@ const (
 	// body defense).
 	DefaultMaxResponseBody = 1 << 20
 	// tokenBytes: 128-bit session id / nonce / state / response_code
-	// ([OID4VP §5] nonce entropy; [OID4VP §12.1] session fixation).
+	// ([OID4VP §5.2] nonce entropy; [OID4VP §14.2] session fixation).
 	tokenBytes = 16
 )
 
@@ -229,7 +229,7 @@ func validBaseURL(raw string) error {
 }
 
 // randToken returns base64url(n crypto-random bytes) from the injected
-// source ([OID4VP §5] nonce; [OID4VP §12.1]: ≥128 bit, unguessable).
+// source ([OID4VP §5.2] nonce; [OID4VP §5.3]: ≥128 bit, unguessable).
 func randToken(r io.Reader, n int) (string, error) {
 	b := make([]byte, n)
 	if _, err := io.ReadFull(r, b); err != nil {

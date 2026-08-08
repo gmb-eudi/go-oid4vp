@@ -36,7 +36,7 @@ type WalletInvocation struct {
 }
 
 // NewSession validates spec, generates the session secrets (id, nonce,
-// state — ≥128-bit from the injected rand; [OID4VP §5, §12.1]) and the
+// state — ≥128-bit from the injected rand; [OID4VP §5.2, §5.3]) and the
 // per-session ephemeral response-encryption key, and
 // returns the wallet invocation. The caller persists the session
 // (SessionStore.Save).

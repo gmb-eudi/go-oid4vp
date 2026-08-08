@@ -86,7 +86,7 @@ func (s *Session) ephemeralPrivateKey() (*ecdsa.PrivateKey, error) {
 //     the session (returned with Consumed=true); every other and every
 //     later call gets ErrSessionConsumed — even after subsequent Save
 //     calls of the same session (the consumed marker is
-//     sticky). This is the [OID4VP §12.1] replay defense for the response
+//     sticky). This is the [OID4VP §14.2] replay defense for the response
 //     endpoint ([OID4VP §8.2]).
 type SessionStore interface {
 	Save(ctx context.Context, s *Session) error

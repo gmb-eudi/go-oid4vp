@@ -123,7 +123,7 @@ func TestResponseCodeSingleUse(t *testing.T) {
 	}
 }
 
-// Session-fixation attack ([OID4VP §12.1]): the attacker
+// Session-fixation attack ([OID4VP §14.2]): the attacker
 // starts their OWN session on the victim's browser, then tries to redeem
 // with the victim's session id (or their own code against the victim's
 // session). Both cross-bindings must fail.

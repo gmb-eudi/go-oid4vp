@@ -147,7 +147,7 @@ func Run(t *testing.T, factory func(t *testing.T) oid4vp.SessionStore) {
 
 	// The consumed marker is sticky across Save — the
 	// service persists post-processing state (response_code) after
-	// ConsumeOnce, and a replayed wallet POST must still fail ([OID4VP §12.1]).
+	// ConsumeOnce, and a replayed wallet POST must still fail ([OID4VP §14.2]).
 	t.Run("ConsumedMarkerSurvivesSave", func(t *testing.T) {
 		st := factory(t)
 		if err := st.Save(ctx, newSession("c2", time.Hour)); err != nil {

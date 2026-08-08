@@ -68,7 +68,7 @@ func (m *MemStore) load(id string) (*Session, error) {
 }
 
 // ConsumeOnce atomically hands the session to exactly one caller
-// ([OID4VP §8.2] one-time response consumption; [OID4VP §12.1] replay defense).
+// ([OID4VP §8.2] one-time response consumption; [OID4VP §14.2] replay defense).
 // The Consumed marker is sticky: it survives later Save calls, so a
 // replayed wallet POST fails even after the service persisted
 // post-processing state.
