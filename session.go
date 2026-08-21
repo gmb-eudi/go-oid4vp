@@ -64,7 +64,7 @@ type Session struct {
 func (s *Session) ephemeralPrivateKey() (*ecdsa.PrivateKey, error) {
 	k, err := x509.ParsePKCS8PrivateKey(s.EphemeralKeyPKCS8)
 	if err != nil {
-		return nil, fmt.Errorf("%w: ephemeral key: %v", ErrSessionInvalid, err)
+		return nil, fmt.Errorf("%w: ephemeral key: %w", ErrSessionInvalid, err)
 	}
 	ec, ok := k.(*ecdsa.PrivateKey)
 	if !ok {

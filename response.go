@@ -118,7 +118,7 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 	// raw digest bytes because the handover carries a CBOR byte string.
 	jwkThumbprint, err := crypto.JWKThumbprintBytes(&priv.PublicKey)
 	if err != nil {
-		return nil, "", fmt.Errorf("%w: ephemeral key thumbprint: %v", ErrSessionInvalid, err)
+		return nil, "", fmt.Errorf("%w: ephemeral key thumbprint: %w", ErrSessionInvalid, err)
 	}
 
 	payload, err := parseResponsePayload(plain)

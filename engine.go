@@ -126,7 +126,7 @@ func New(ctx context.Context, cfg Config) (*Engine, error) {
 	// must BE the leaf key.
 	pub, err := cfg.Keys.Public(ctx, cfg.SigningKeyID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: signing key: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: signing key: %w", ErrConfig, err)
 	}
 	ecPub, ok := pub.(*ecdsa.PublicKey)
 	if !ok {
@@ -174,11 +174,11 @@ func New(ctx context.Context, cfg Config) (*Engine, error) {
 	// shape entirely and RequestURIBase is neither required nor consulted.
 	if cfg.RequestURIFunc == nil {
 		if err := validBaseURL(cfg.RequestURIBase); err != nil {
-			return nil, fmt.Errorf("%w: RequestURIBase: %v", ErrConfig, err)
+			return nil, fmt.Errorf("%w: RequestURIBase: %w", ErrConfig, err)
 		}
 	}
 	if err := validBaseURL(cfg.UniversalLinkBase); err != nil {
-		return nil, fmt.Errorf("%w: UniversalLinkBase: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: UniversalLinkBase: %w", ErrConfig, err)
 	}
 
 	e := &Engine{
