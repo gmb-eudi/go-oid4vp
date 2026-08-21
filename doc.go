@@ -3,7 +3,7 @@
 // carrying the operator WRPAC, request_uri lifecycle, encrypted
 // direct_post.jwt response processing with per-session ephemeral keys,
 // Digital Credentials API shapes (Annex A), same-device response_code
-// return ([OID4VP §8.2/§8.3]), and OID4VP error responses.
+// return ([OID4VP §8.2] and [OID4VP §13.3]), and OID4VP error responses.
 //
 // The package is storage-free (SessionStore interface; in-memory reference
 // implementation; contract suite in storetest) and HTTP-free (services own

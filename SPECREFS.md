@@ -2,7 +2,7 @@
 
 | Spec | Version pinned | Sections used |
 |---|---|---|
-| OpenID4VP | 1.0 (final) | §5 (authorization request, client_id prefixes, verifier_info, request_uri_method, transaction_data), §6 (DCQL), §8.1 (vp_token), §8.2 (direct_post.jwt, response_code), §8.3 (redirect_uri return), §12.1 (session fixation), Annex A (DCAPI), Annex B.2 (mso_mdoc handover, RFC 7638 `jwk_thumbprint` of the RP's own ephemeral response-encryption key, carried as raw digest bytes; JWE apv is validated against the session nonce), Annex B.3 (SD-JWT VC) |
+| OpenID4VP | 1.0 (final) | §5 (authorization request, client_id prefixes, verifier_info, request_uri_method, transaction_data), §6 (DCQL), §8.1 (vp_token), §8.2 (response mode direct_post; the redirect_uri return parameter), §8.3 / §8.3.1 (encrypted responses, direct_post.jwt), §13.3 (response_code — minted, carried on the redirect, redeemed), §14.2 (session fixation — the response endpoint and the response_code are single-use), Annex A (DCAPI), Annex B.2 (mso_mdoc handover, RFC 7638 `jwk_thumbprint` of the RP's own ephemeral response-encryption key, carried as raw digest bytes; JWE apv is validated against the session nonce), Annex B.3 (SD-JWT VC) |
 | OpenID4VC HAIP | 1.0 (final) | §5 request/response requirements; response encryption mandatory; ES256/P-256 baseline |
 | RFC 9101 (JAR) | RFC | signed Request Object, typ oauth-authz-req+jwt, aud/exp/iat/nbf |
 | ISO/IEC TS 18013-7 | 2024 | Annex B via OID4VP Annex B.2 (SessionTranscript, JWE apv — apu no longer read, see 2026-07-07 note below) |

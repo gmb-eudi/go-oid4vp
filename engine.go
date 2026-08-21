@@ -29,7 +29,7 @@ const (
 	// body defense).
 	DefaultMaxResponseBody = 1 << 20
 	// tokenBytes: 128-bit session id / nonce / state / response_code
-	// ([OID4VP §5] nonce entropy; [OID4VP §12.1] session fixation).
+	// ([OID4VP §5.2] nonce entropy; [OID4VP §14.2] session fixation).
 	tokenBytes = 16
 )
 
@@ -126,7 +126,7 @@ func New(ctx context.Context, cfg Config) (*Engine, error) {
 	// must BE the leaf key.
 	pub, err := cfg.Keys.Public(ctx, cfg.SigningKeyID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: signing key: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: signing key: %w", ErrConfig, err)
 	}
 	ecPub, ok := pub.(*ecdsa.PublicKey)
 	if !ok {
@@ -174,11 +174,11 @@ func New(ctx context.Context, cfg Config) (*Engine, error) {
 	// shape entirely and RequestURIBase is neither required nor consulted.
 	if cfg.RequestURIFunc == nil {
 		if err := validBaseURL(cfg.RequestURIBase); err != nil {
-			return nil, fmt.Errorf("%w: RequestURIBase: %v", ErrConfig, err)
+			return nil, fmt.Errorf("%w: RequestURIBase: %w", ErrConfig, err)
 		}
 	}
 	if err := validBaseURL(cfg.UniversalLinkBase); err != nil {
-		return nil, fmt.Errorf("%w: UniversalLinkBase: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: UniversalLinkBase: %w", ErrConfig, err)
 	}
 
 	e := &Engine{
@@ -229,7 +229,7 @@ func validBaseURL(raw string) error {
 }
 
 // randToken returns base64url(n crypto-random bytes) from the injected
-// source ([OID4VP §5] nonce; [OID4VP §12.1]: ≥128 bit, unguessable).
+// source ([OID4VP §5.2] nonce; [OID4VP §5.3]: ≥128 bit, unguessable).
 func randToken(r io.Reader, n int) (string, error) {
 	b := make([]byte, n)
 	if _, err := io.ReadFull(r, b); err != nil {

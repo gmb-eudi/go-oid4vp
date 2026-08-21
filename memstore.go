@@ -33,7 +33,7 @@ func (m *MemStore) Save(_ context.Context, s *Session) error {
 	}
 	raw, err := json.Marshal(s)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrSessionInvalid, err)
+		return fmt.Errorf("%w: %w", ErrSessionInvalid, err)
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -58,7 +58,7 @@ func (m *MemStore) load(id string) (*Session, error) {
 	}
 	var s Session
 	if err := json.Unmarshal(raw, &s); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrSessionInvalid, err)
+		return nil, fmt.Errorf("%w: %w", ErrSessionInvalid, err)
 	}
 	if !m.clock().Before(s.ExpiresAt) {
 		delete(m.sessions, id)
@@ -68,7 +68,7 @@ func (m *MemStore) load(id string) (*Session, error) {
 }
 
 // ConsumeOnce atomically hands the session to exactly one caller
-// ([OID4VP §8.2] one-time response consumption; [OID4VP §12.1] replay defense).
+// ([OID4VP §8.2] one-time response consumption; [OID4VP §14.2] replay defense).
 // The Consumed marker is sticky: it survives later Save calls, so a
 // replayed wallet POST fails even after the service persisted
 // post-processing state.
@@ -85,7 +85,7 @@ func (m *MemStore) ConsumeOnce(_ context.Context, id string) (*Session, error) {
 	s.Consumed = true
 	raw, err := json.Marshal(s)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrSessionInvalid, err)
+		return nil, fmt.Errorf("%w: %w", ErrSessionInvalid, err)
 	}
 	m.sessions[id] = raw
 	return s, nil

@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"encoding/base64"
 	"encoding/json"
-	"math/big"
 	"net/url"
 	"testing"
 
@@ -43,7 +42,18 @@ func extractEncJWK(t *testing.T, claims map[string]any) *ecdsa.PublicKey {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &ecdsa.PublicKey{Curve: elliptic.P256(), X: new(big.Int).SetBytes(x), Y: new(big.Int).SetBytes(y)}
+	if len(x) != 32 || len(y) != 32 {
+		t.Fatalf("unexpected P-256 coordinate sizes: %d/%d", len(x), len(y))
+	}
+
+	// 0x04 || X || Y — parsed rather than assigned to the deprecated X/Y fields,
+	// which also checks the point is on the curve.
+	pub, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), append(append([]byte{4}, x...), y...))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return pub
 }
 
 // encryptResponse builds the wallet-side JWE (ECDH-ES + A128GCM — a

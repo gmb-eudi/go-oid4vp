@@ -39,7 +39,7 @@ func (e *Engine) DCAPIRequest(ctx context.Context, s *Session) ([]byte, error) {
 	}
 	payload, err := json.Marshal(claims)
 	if err != nil {
-		return nil, fmt.Errorf("%w: dcapi claims: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: dcapi claims: %w", ErrConfig, err)
 	}
 	tok, err := crypto.SignJWS(ctx, e.cfg.Keys, e.cfg.SigningKeyID, map[string]any{
 		"typ": typOAuthAuthzReq, // RFC 9101
@@ -90,7 +90,7 @@ func (e *Engine) dcapiClaims(s *Session, signed bool) (map[string]any, error) {
 	}
 	regClaim, err := s.Registration.Claims()
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrNoRegistration, err)
+		return nil, fmt.Errorf("%w: %w", ErrNoRegistration, err)
 	}
 	cm, err := e.clientMetadata(s)
 	if err != nil {
@@ -196,7 +196,7 @@ func (e *Engine) ProcessDCAPIResponse(ctx context.Context, s *Session, origin st
 	// flows.
 	jwkThumbprint, err := crypto.JWKThumbprintBytes(&priv.PublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("%w: ephemeral key thumbprint: %v", ErrSessionInvalid, err)
+		return nil, fmt.Errorf("%w: ephemeral key thumbprint: %w", ErrSessionInvalid, err)
 	}
 
 	payload, err := parseResponsePayload(plain)

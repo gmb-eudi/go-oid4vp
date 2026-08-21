@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-// RedirectURI renders the [OID4VP §8.3] same-device return: the response endpoint
+// RedirectURI renders the [OID4VP §8.2] same-device return: the response endpoint
 // answers the wallet's POST with 200 {"redirect_uri": <this value>}, and
 // the wallet navigates the user's browser there. The response_code in the
-// query fences the result fetch to the browser session that actually
-// completed the presentation ([OID4VP §8.2, §12.1]).
+// query ([OID4VP §13.3]) fences the result fetch to the browser session that
+// actually completed the presentation ([OID4VP §14.2]).
 func (e *Engine) RedirectURI(s *Session) (string, error) {
 	if s == nil {
 		return "", ErrSessionInvalid
@@ -29,7 +29,7 @@ func (e *Engine) RedirectURI(s *Session) (string, error) {
 }
 
 // ConsumeResponseCode redeems a response_code: constant-time comparison
-// against the code minted FOR THIS SESSION, single-use. This is the [OID4VP §12.1]
+// against the code minted FOR THIS SESSION, single-use. This is the [OID4VP §14.2]
 // session-fixation defense — an attacker who fixated their own session id
 // on a victim cannot fetch the victim's result: their code is bound to
 // their session. The caller persists s (SessionStore.Save) so the

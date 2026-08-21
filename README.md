@@ -19,7 +19,7 @@ and OID4VP error-response mapping.
 - Response encryption keys are per-session ephemeral; static operator
   decryption keys are not supported.
 
-Implemented specs: OpenID4VP 1.0 (final) §5/§6/§8/§12.1, Annex A, Annex B;
+Implemented specs: OpenID4VP 1.0 (final) §5/§6/§8/§13.3/§14.2, Annex A, Annex B;
 RFC 9101; HAIP 1.0 (final); ARF 2.9 RPRC_19a; CIR 2024/2982 Art. 3.
 
 Status: pre-v1. API frozen no earlier than OIDF conformance pass.

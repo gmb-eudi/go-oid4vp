@@ -55,7 +55,7 @@ func (e *Engine) RequestObjectJWT(ctx context.Context, s *Session) ([]byte, erro
 	}
 	payload, err := json.Marshal(claims)
 	if err != nil {
-		return nil, fmt.Errorf("%w: request claims: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: request claims: %w", ErrConfig, err)
 	}
 	protected := map[string]any{
 		"typ": typOAuthAuthzReq, // RFC 9101
@@ -84,7 +84,7 @@ func (e *Engine) requestClaims(s *Session) (map[string]any, error) {
 	// the persisted session share one wire vocabulary.
 	regClaim, err := s.Registration.Claims()
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrNoRegistration, err)
+		return nil, fmt.Errorf("%w: %w", ErrNoRegistration, err)
 	}
 	cm, err := e.clientMetadata(s)
 	if err != nil {
@@ -167,7 +167,7 @@ func ephemeralJWK(pub *ecdsa.PublicKey, alg, kid string) (map[string]any, error)
 	if err != nil {
 		// Only NIST P-curves reach here (policy-validated at New); a failure
 		// is a configuration bug, not attacker-controlled (fail closed).
-		return nil, fmt.Errorf("%w: ephemeral key: %v", ErrConfig, err)
+		return nil, fmt.Errorf("%w: ephemeral key: %w", ErrConfig, err)
 	}
 	point := ep.Bytes() // 0x04 || X || Y, each coordinate `size` bytes
 	size := (pub.Curve.Params().BitSize + 7) / 8

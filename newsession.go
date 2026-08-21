@@ -12,13 +12,13 @@ import (
 )
 
 // RequestSpec describes one verification request (the target
-// interface). ReturnURI is the same-device [OID4VP §8.3] redirect target for
+// interface). ReturnURI is the same-device [OID4VP §8.2] redirect target for
 // the same-device flow.
 type RequestSpec struct {
 	Query           dcql.Query
 	Flow            Flow // SameDevice | CrossDevice | DCAPI
 	ResponseURI     string
-	ReturnURI       string                 // same-device only ([OID4VP §8.3])
+	ReturnURI       string                 // same-device only ([OID4VP §8.2])
 	Registration    rpcert.RegistrationRef // always (ARF RPRC_19a)
 	WRPRC           []byte                 // optional
 	TransactionData [][]byte               // phase 2
@@ -36,7 +36,7 @@ type WalletInvocation struct {
 }
 
 // NewSession validates spec, generates the session secrets (id, nonce,
-// state — ≥128-bit from the injected rand; [OID4VP §5, §12.1]) and the
+// state — ≥128-bit from the injected rand; [OID4VP §5.2, §5.3]) and the
 // per-session ephemeral response-encryption key, and
 // returns the wallet invocation. The caller persists the session
 // (SessionStore.Save).
@@ -64,7 +64,7 @@ func (e *Engine) NewSession(ctx context.Context, spec RequestSpec) (*Session, Wa
 	}
 	der, err := x509.MarshalPKCS8PrivateKey(key)
 	if err != nil {
-		return nil, WalletInvocation{}, fmt.Errorf("%w: ephemeral key: %v", ErrConfig, err)
+		return nil, WalletInvocation{}, fmt.Errorf("%w: ephemeral key: %w", ErrConfig, err)
 	}
 	now := e.clock()
 	s := &Session{
@@ -102,7 +102,7 @@ func (e *Engine) validateSpec(spec RequestSpec) error {
 		return fmt.Errorf("%w: dcql query with at least one credential query required (OID4VP §6)", ErrSpec)
 	}
 	if err := spec.Query.Validate(); err != nil {
-		return fmt.Errorf("%w: dcql query: %v", ErrSpec, err)
+		return fmt.Errorf("%w: dcql query: %w", ErrSpec, err)
 	}
 	if len(spec.TransactionData) > 0 {
 		if !e.cfg.EnableTransactionData {
@@ -122,10 +122,10 @@ func (e *Engine) validateSpec(spec RequestSpec) error {
 		}
 		if spec.Flow == SameDevice {
 			if err := validHTTPSURL(spec.ReturnURI); err != nil {
-				return fmt.Errorf("%w: same-device return_uri: %v (OID4VP §8.3)", ErrSpec, err)
+				return fmt.Errorf("%w: same-device return_uri: %w (OID4VP §8.2)", ErrSpec, err)
 			}
 		} else if spec.ReturnURI != "" {
-			return fmt.Errorf("%w: return_uri is same-device-only (OID4VP §8.3)", ErrSpec)
+			return fmt.Errorf("%w: return_uri is same-device-only (OID4VP §8.2)", ErrSpec)
 		}
 	case DCAPI:
 		if spec.ResponseURI != "" || spec.ReturnURI != "" {
@@ -136,7 +136,7 @@ func (e *Engine) validateSpec(spec RequestSpec) error {
 		}
 		for _, o := range spec.ExpectedOrigins {
 			if err := validOrigin(o); err != nil {
-				return fmt.Errorf("%w: expected origin %q: %v", ErrSpec, o, err)
+				return fmt.Errorf("%w: expected origin %q: %w", ErrSpec, o, err)
 			}
 		}
 	default:
@@ -150,11 +150,11 @@ func (e *Engine) validateSpec(spec RequestSpec) error {
 // rule to the response endpoint (fail closed; wallets enforce the same).
 func (e *Engine) validResponseURI(raw string) error {
 	if err := validHTTPSURL(raw); err != nil {
-		return fmt.Errorf("%w: response_uri: %v (OID4VP §8.2)", ErrSpec, err)
+		return fmt.Errorf("%w: response_uri: %w (OID4VP §8.2)", ErrSpec, err)
 	}
 	u, err := url.Parse(raw)
 	if err != nil {
-		return fmt.Errorf("%w: response_uri: %v", ErrSpec, err)
+		return fmt.Errorf("%w: response_uri: %w", ErrSpec, err)
 	}
 	if u.Hostname() != e.cfg.ClientDNSName {
 		return fmt.Errorf("%w: response_uri host %q must equal the client_id DNS name %q (OID4VP §5 x509_san_dns)", ErrSpec, u.Hostname(), e.cfg.ClientDNSName)

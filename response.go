@@ -16,15 +16,16 @@ import (
 )
 
 // RawResponse is the wallet's POST body to the response endpoint
-// ([OID4VP §8.2] direct_post.jwt: application/x-www-form-urlencoded with
+// ([OID4VP §8.3.1] direct_post.jwt: application/x-www-form-urlencoded with
 // response=<JWE>). The service passes it verbatim, size-unchecked — the
 // engine owns the cap.
 type RawResponse struct {
 	Body []byte
 }
 
-// ResponseCode is the single-use [OID4VP §8.2] response_code minted for
-// same-device sessions and redeemed via ConsumeResponseCode ([OID4VP §8.3/§12.1]).
+// ResponseCode is the [OID4VP §13.3] response_code minted for same-device
+// sessions and redeemed via ConsumeResponseCode. Single use is what makes it
+// worth minting at all ([OID4VP §14.2]).
 type ResponseCode string
 
 // Presentation is one entry of the vp_token object ([OID4VP §8.1]), paired
@@ -117,7 +118,7 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 	// raw digest bytes because the handover carries a CBOR byte string.
 	jwkThumbprint, err := crypto.JWKThumbprintBytes(&priv.PublicKey)
 	if err != nil {
-		return nil, "", fmt.Errorf("%w: ephemeral key thumbprint: %v", ErrSessionInvalid, err)
+		return nil, "", fmt.Errorf("%w: ephemeral key thumbprint: %w", ErrSessionInvalid, err)
 	}
 
 	payload, err := parseResponsePayload(plain)
@@ -137,7 +138,7 @@ func (e *Engine) ProcessResponse(ctx context.Context, s *Session, r RawResponse)
 	var code ResponseCode
 	if s.Flow == SameDevice {
 		// [OID4VP §8.2]: mint a fresh single-use response_code (≥128-bit, injected
-		// rand; [OID4VP §12.1] session-fixation defense). Cross-device sessions get
+		// rand; [OID4VP §14.2] session-fixation defense). Cross-device sessions get
 		// none — the browser polls instead.
 		c, err := randToken(e.rand, tokenBytes)
 		if err != nil {
