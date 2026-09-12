@@ -3,6 +3,43 @@
 Notable changes to this library, newest first. Versions are git tags; this file is written
 for whoever bumps the dependency.
 
+## v0.0.8
+
+**Requires Go 1.27.0.** The `go` directive moves up from 1.26.6, so a consumer on an older
+toolchain will not build this version. Nothing else here behaves differently — no signature
+changed, no message text changed, and nothing that passed before now fails.
+
+### Changed
+
+- **`go` directive 1.26.6 → 1.27.0.** This is the minimum Go version a consumer needs. The rest
+  of this project's services already require 1.27.0; the libraries were the half still behind,
+  and they are being brought up together.
+
+### Notes
+
+- **The first-party set moves as one:** `github.com/gmb-eudi/go-eudi-rpcert` → **v0.0.6**,
+  `go-eudi-crypto` → **v0.0.8**, `go-eudi-trust` → **v0.1.2** and `go-mdoc` → **v0.1.2**.
+  `go-dcql` is unchanged at v0.0.2 — it had no release to take. **None of those four changed
+  source of its own**; each was itself a dependency-maintenance release, so nothing new reaches
+  request building, the response and presentation-verification path, DCQL evaluation or the
+  session store.
+
+- **Transitive only:** `github.com/lestrrat-go/jwx/v3` → v3.3.0 (was v3.2.0),
+  `golang.org/x/crypto` → v0.57.0 (was v0.55.0) and `golang.org/x/sys` → v0.48.0 (was v0.47.0).
+  They arrive through `go-eudi-crypto`. The `x/crypto` move crosses v0.56.0, which fixed
+  **GO-2026-6354** and **GO-2026-6355** upstream.
+
+- The gate is green on the new set **and on the new directive**: `go mod verify`,
+  `go mod tidy -diff`, build, vet, `gofmt`, and `go test -race` with **0 races**, run in a Go
+  1.27.0 toolchain. `govulncheck` reports **0 vulnerabilities this library's code is affected
+  by**. One advisory stands at module level — **GO-2026-5932**, the unmaintained
+  `golang.org/x/crypto/openpgp` package. It has **no fixed version**, so no bump clears it, and
+  nothing here imports it.
+
+- Repository hygiene, with no effect on code that uses the library: CI now also runs on pushes
+  to `develop`, the pinned GitHub Actions moved to their current commits, the `setup-go` pin
+  rolled forward to v7.0.0, and `.gitattributes` now pins its own line endings.
+
 ## v0.0.7
 
 Compatible: no signature changes, no message-text changes, nothing that passed before now
