@@ -7,7 +7,7 @@ require (
 	github.com/gmb-eudi/go-eudi-crypto v0.0.9
 	github.com/gmb-eudi/go-eudi-rpcert v0.0.7
 	github.com/gmb-eudi/go-mdoc v0.1.3
-	github.com/lestrrat-go/jwx/v3 v3.3.0
+	github.com/lestrrat-go/jwx/v3 v3.4.0
 )
 
 require (
@@ -25,6 +25,5 @@ require (
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/veraison/go-cose v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 )
