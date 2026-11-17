@@ -1,20 +1,20 @@
 module github.com/gmb-eudi/go-oid4vp
 
-go 1.27.2
+go 1.27.4
 
 require (
-	github.com/gmb-eudi/go-dcql v0.0.3
-	github.com/gmb-eudi/go-eudi-crypto v0.0.9
-	github.com/gmb-eudi/go-eudi-rpcert v0.0.7
-	github.com/gmb-eudi/go-mdoc v0.1.3
-	github.com/lestrrat-go/jwx/v3 v3.3.0
+	github.com/gmb-eudi/go-dcql v0.0.4
+	github.com/gmb-eudi/go-eudi-crypto v0.0.10
+	github.com/gmb-eudi/go-eudi-rpcert v0.0.8
+	github.com/gmb-eudi/go-mdoc v0.1.4
+	github.com/lestrrat-go/jwx/v3 v3.4.0
 )
 
 require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
-	github.com/gmb-eudi/go-eudi-trust v0.1.3 // indirect
-	github.com/goccy/go-json v0.11.2 // indirect
+	github.com/fxamacker/cbor/v2 v2.10.0 // indirect
+	github.com/gmb-eudi/go-eudi-trust v0.1.4 // indirect
+	github.com/goccy/go-json v0.12.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/dsig v1.4.0 // indirect
 	github.com/lestrrat-go/dsig-secp256k1 v1.0.0 // indirect
@@ -25,6 +25,5 @@ require (
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/veraison/go-cose v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 )
