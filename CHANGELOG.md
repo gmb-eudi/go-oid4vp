@@ -3,6 +3,14 @@
 Notable changes to this library, newest first. Versions are git tags; this file is written
 for whoever bumps the dependency.
 
+## v0.0.10
+
+**Requires Go 1.27.4** (was 1.27.2), so a consumer on an older toolchain will not build this version. No source change: every exported symbol, signature and behaviour is as in v0.0.9.
+
+### Changed
+
+- `github.com/gmb-eudi/go-dcql` → v0.0.4, `github.com/gmb-eudi/go-eudi-crypto` → v0.0.10, `github.com/gmb-eudi/go-eudi-rpcert` → v0.0.8 and `github.com/gmb-eudi/go-mdoc` → v0.1.4, with `github.com/lestrrat-go/jwx/v3` v3.4.0 and the remaining dependency graph refreshed.
+
 ## v0.0.9
 
 **Requires Go 1.27.2.** The `go` directive moves up from 1.27.0, so a consumer on an older
